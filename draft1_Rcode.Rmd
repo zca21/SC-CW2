@@ -4,6 +4,13 @@ output: html_document
 date: "2022-12-12"
 ---
 ```{r}
+setwd("~/Desktop/Statistical Computing/CW/SC-CW2")
+```
+
+
+```{r}
+#Extra code to check was doing inverse transform sampling correctly
+
 sample.dexp <- function(n,a,b,s,lamda){
   #Sampling from the double exp function g(x)
   #Using inverse transformation technique
@@ -25,6 +32,9 @@ plot(density(dexp.sample))
 #Note that its center (mean) is b and variance or spread is controlled by lambda (b on wiki note lambda=1/b) thus for smaller lambda variance increases
 ```
 ```{r}
+## Question 1
+
+#c
 q1.ar <- function(n,a,b,s,lambda,M){
   
     X <- NULL
@@ -55,6 +65,8 @@ q1.ar <- function(n,a,b,s,lambda,M){
     return(X)
 }
 
+
+#d
 set.seed(2022)
 ar.sample <- q1.ar(5000,2,3,1.25,0.5,M=3.2*exp(0.875))
 #Creating function to create actual pdf of target distribution
@@ -81,9 +93,57 @@ hist(ar.sample,nclass=100,prob = T,
 curve(target.dist(x,2,3,1.25),from=-4,to=20,n=1000,add=T, lwd= 1.5, lty= 3,col="red");
 legend("topright", lty = c(1, 3), cex = 0.6, col = c("black","red"),
 legend = c("Simulated pdf", "Actual pdf"))
+
+
+#e
+#Using the plain Monte Carlo estimator of I (I_{n})
+
+#Function to calculate the kth root of kth moment using plain Monte Carlo estimator
+k.root.k.moment <- function(sample,n,k){
+  output <- (1/n*sum(sample^k))^(1/k)
+  return(output)
+}
+  
+#k=2
+round(k.root.k.moment(ar.sample,5000,2),3)
+#2nd root of 2nd moment is 2.204 (3 d.p.)
+
+#k=3
+round(k.root.k.moment(ar.sample,5000,3),3)
+#3rd root of 3rd moment is 3.350 (3 d.p.)
+```
+
+```{r}
+## Question 2
+n <- 100000
+X <- rexp(n,rate=0.5)+30 ## generate samples from shifted Exp(10/7)
+v.weights <- dnorm(X,mean=30,sd=0.7)/dexp(X-30,rate=0.5) ## vector of weights
+p.t <- mean(v.weights) ## calculate the IS estimator
+
+q2.is <- function(n,x0,time,a,lambda){
+  
+  
+}
 ```
 
 
+
+```{r}
+## Question 5
+#a
+bootFStat <- function(group,y,w,bootCount){
+  #iterating for each replicate
+  for (b in 1:bootCount){
+    #creating bth bootstrap dataset
+    sample(y)
+  }
+
+  
+}
+
+#b
+eco.df <- read.table("q5EcoStudy.txt",header = T)
+```
 
 
 
