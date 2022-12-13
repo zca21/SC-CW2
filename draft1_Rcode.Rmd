@@ -131,6 +131,8 @@ q2.is <- function(n,x0,time,a,lambda){
 ```{r}
 #Q5 but with unknown number of groups 
 
+#Need to edit as in bootstrapping dont care aout having same number in each group! (I think)
+
 #a
 bootFStat <- function(group,y,w,bootCount){
   #object to store B bootstrap estimates of f statistic
@@ -207,11 +209,89 @@ bootFStat(eco.df$habitat,eco.df$density,eco.df$weight,1000)
 
 ```
 
+```{r}
+#Bootstrap where number in each group not set
+
+bootFStat <- function(group,y,w,bootCount){
+  #object to store B bootstrap estimates of f statistic
+  Fstat.boot.est <- NULL
+  #grouping values into dataset 
+  data <- data.frame("group"=group,"Obs"=y,"weight"=w)
+  #Adding id column so can sample by id to retain all info of row (obs and weight)
+  data$id <- seq(1,dim(data)[1])
+  
+  for (b in 1:bootCount){
+    #object to store value of y tilde * N 
+    y.tilde.N <- 0
+    
+    #sampling dataset
+    sample.id <- sample(data$id, size = length(y), replace = TRUE)
+    #extracting weight and y value corresponding to id sampled
+    sample.obs <- NULL
+    sample.weight <- NULL
+    sample.group <- NULL
+    
+    for (i in 1:length(y)){
+      sample.obs[i] <- data$Obs[data$id == sample.id[i]]
+      sample.weight[i] <- data$weight[data$id == sample.id[i]]
+      sample.group[i] <- data$group[data$id == sample.id[i]]
+    }
+    #creating dataset of sample
+    sample.dataset <- data.frame("group"=sample.group,"Obs"=sample.obs,"weight"=sample.weight)
+    
+    #computing statistics to calculate f-stat
+    for (group_val in unique(sample.dataset$group)){
+      group.dataset <- data.frame("Obs"=sample.dataset$Obs[sample.dataset==group_val],
+                                  "weight"=sample.dataset$weight[sample.dataset==group_val])
+      
+      #calculating number of obs for current group
+      assign(paste0("nobs.",group_val),dim(group.dataset)[1])
+      
+      #Calculating y tilde_{i} for current group
+      y.tilde.group <- sum(group.dataset$Obs*group.dataset$weight)/dim(group.dataset)[1]
+      assign(paste0("y.tilde.",group_val),y.tilde.group)
+          
+      #updating y tilde using current group
+      y.tilde.N <- y.tilde.N + sum(group.dataset$Obs*group.dataset$weight)
+          
+      #Calculating part of denominator of f-statistic corresponding to current group
+      f.denom.group.part <- sum((group.dataset$Obs*group.dataset$weight-y.tilde.group)^2)
+      assign(paste0("f.denom.",group_val),f.denom.group.part)
+      
+    }
+    #calculating y tilde
+    y.tilde <- y.tilde.N/length(y)
+    
+    #calculating summation parts of numerator and denominator of f statistic
+    fstat.num <- 0
+    fstat.denom <- 0
+    for (group_val in unique(data$group)){
+      fstat.num <- fstat.num+get(paste0("nobs.",group_val))*(get(paste0("y.tilde.",group_val))-y.tilde)^2
+      fstat.denom <- fstat.denom + get(paste0("f.denom.",group_val))
+    }
+    #calculating F stat
+    fstat <- (fstat.num/(length(unique(group))-1))/(fstat.denom/(length(y)-length(unique(group))))
+    Fstat.boot.est[b] <- fstat
+    
+  }
+  #Calculating standard error of bootstrap f statistic
+  bootstr.mu <- sum(Fstat.boot.est)/length(Fstat.boot.est)
+  bootstr.se <- sqrt(sum((Fstat.boot.est-bootstr.mu )^2)/(length(Fstat.boot.est-1)))
+  
+  return(bootstr.se)
+}
+
+#b
+set.seed(2022)
+bootFStat(eco.df$habitat,eco.df$density,eco.df$weight,1000)  
+```
+
+
 
 
 
 ```{r}
-## Question 5 extra stuff 
+## Question 5 extra stuff (use this to check results by doing piece by piece)
 
 #a
 unique(eco.df$habitat)[3]
