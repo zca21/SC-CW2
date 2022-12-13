@@ -129,26 +129,189 @@ q2.is <- function(n,x0,time,a,lambda){
 
 
 ```{r}
-## Question 5
+#Q5 but with unknown number of groups 
+
 #a
 bootFStat <- function(group,y,w,bootCount){
-  #iterating for each replicate
-  for (b in 1:bootCount){
-    #creating bth bootstrap dataset
-    sample(y)
-  }
-
+  #object to store B bootstrap estimates of f statistic
+  Fstat.boot.est <- NULL
+  #grouping values into dataset 
+  data <- data.frame("group"=group,"Obs"=y,"weight"=w)
+  #Adding id column so can sample by id to retain all info of row (obs and weight)
+  data$id <- seq(1,dim(data)[1])
   
+  for (b in 1:bootCount){
+    #object to store value of y tidle * N 
+    y.tilde.N <- 0
+    
+    #loop to do bootstrap method for each group
+      for (group_val in unique(data$group)){
+        #selecting subset id's of dataset that is current group
+        group_dataset <- data$id[data$group==group_val]
+        #sampling from group dataset with replacement
+        group_sample.id <- sample(group_dataset, size = length(group_dataset), replace = TRUE)
+        
+          #Using sampled id to select obs and weight for each id sampled to create bootstrap dataset for each group
+          #Selecting obs and weights using id's sampled
+          sample.group.obs <- NULL
+          sample.group.weight <- NULL
+          
+          for (i in 1:length(group_sample.id)){
+            sample.group.obs[i] <- data$Obs[data$id == group_sample.id[i]]
+            sample.group.weight[i] <- data$weight[data$id == group_sample.id[i]]
+          }
+          #Setting sampled observations and weights to be those of group they belong to before repeating loop with next group
+          assign(paste0("sample.",group_val,".obs"),sample.group.obs)
+          assign(paste0("sample.",group_val,".weight"),sample.group.weight)
+          
+          #Calculating y tilde_{i} for current group
+          y.tilde.group <- sum(sample.group.obs*sample.group.weight)/length(sample.group.obs)
+          assign(paste0("y.tilde.",group_val),y.tilde.group)
+          
+          #updating y tilde using current group
+          y.tilde.N <- y.tilde.N + sum(sample.group.obs*sample.group.weight)
+          
+          #Calculating part of denominator of f-statistic corresponding to current group
+          f.denom.group.part <- sum((sample.group.obs*sample.group.weight-y.tilde.group)^2)
+          assign(paste0("f.denom.",group_val),f.denom.group.part)
+      }
+    
+    #calculating y tilde
+    y.tilde <- y.tilde.N/length(y)
+    # y.tilde <- y.tilde.N/300
+    
+    #calculating summation parts of numerator and denominator of f statistic
+    fstat.num <- 0
+    fstat.denom <- 0
+    for (group_val in unique(data$group)){
+      fstat.num <- fstat.num+length(get(paste0("sample.",group_val,".obs")))*(get(paste0("y.tilde.",group_val))-y.tilde)^2
+      fstat.denom <- fstat.denom + get(paste0("f.denom.",group_val))
+    }
+    #calculating F stat
+    fstat <- (fstat.num/(length(unique(group))-1))/(fstat.denom/(length(y)-length(unique(group))))
+    Fstat.boot.est[b] <- fstat
+  }
+  
+  #Calculating standard error of bootstrap f statistic
+  bootstr.mu <- sum(Fstat.boot.est)/length(Fstat.boot.est)
+  bootstr.se <- sqrt(sum((Fstat.boot.est-bootstr.mu )^2)/(length(Fstat.boot.est-1)))
+  
+  return(bootstr.se)
 }
 
 #b
-eco.df <- read.table("q5EcoStudy.txt",header = T)
+set.seed(2022)
+bootFStat(eco.df$habitat,eco.df$density,eco.df$weight,1000)  
+
+
+
 ```
 
 
 
 
+```{r}
+## Question 5 extra stuff 
+
+#a
+unique(eco.df$habitat)[3]
+
+bootFStat <- function(group,y,w,bootCount){
+  #grouping into dataset 
+  data <- data.frame("group"=group,"Obs"=y,"weight"=w)
+  #Adding id column so can sample by id to retain all info of row (obs and weight)
+  data$id <- seq(1,dim(data)[1])
+  
+  #Splitting data into groups depending on group
+  group.A <- data$id[data$group=="A"]
+  group.B <- data$id[data$group=="B"]
+  group.C <- data$id[data$group=="C"]
+  #Sampling with replacement
+  sample.A.id <- sample(group.A, size = length(group.A), replace = TRUE)
+  sample.B.id <- sample(group.B, size = length(group.B), replace = TRUE)
+  sample.C.id <- sample(group.C, size = length(group.C), replace = TRUE)
+  
+  #Using sampled id to select obs and weight for each id sampled to create bootstrap dataset for each group
+  #Selecting obs and weights using id's sampled
+  
+  #For A
+  sample.A.obs <- NULL
+  sample.A.weight <- NULL
+  for (i in 1:length(sample.A.id)){
+    sample.A.obs[i] <- data$Obs[data$id == sample.A.id[i]]
+    sample.A.weight[i] <- data$weight[data$id == sample.A.id[i]]
+  }
+  #calculating y.tilde_{i} for A
+  y.tilde.A <- sum(sample.A.obs*sample.A.obs)/length(sample.A.obs)
+  
+  #For B
+  sample.B.obs <- NULL
+  sample.B.weight <- NULL
+  for (i in 1:length(sample.B.id)){
+    sample.B.obs[i] <- data$Obs[data$id == sample.B.id[i]]
+    sample.B.weight[i] <- data$weight[data$id == sample.B.id[i]]
+  }
+  #calculating y.tilde_{i} for B
+  y.tilde.B <- sum(sample.B.obs*sample.B.obs)/length(sample.B.obs)
+  
+  #For C
+  sample.C.obs <- NULL
+  sample.C.weight <- NULL
+  for (i in 1:length(sample.C.id)){
+    sample.C.obs[i] <- data$Obs[data$id == sample.C.id[i]]
+    sample.C.weight[i] <- data$weight[data$id == sample.C.id[i]]
+  }
+  #calculating y.tilde_{i} for C
+  y.tilde.C <- sum(sample.C.obs*sample.C.obs)/length(sample.C.obs)
+  
+  #Calculating y.tilde
+  y.tilde <- (y.tilde.A*length(sample.A.obs)+y.tilde.B*length(sample.B.obs)+y.tilde.C*length(sample.C.obs))/length(y)
+  
+  #Calculating F.tilde
+  F.num <- 1
+  F.denom <-2
+}
 
 
+
+
+
+
+
+
+library(dplyr)
+eco.df <- read.table("q5EcoStudy.txt",header = T)
+data <- eco.df%>%
+  rename("group"="habitat","Obs"="density")
+data$id <- seq(1,dim(data)[1])
+  
+  #Splitting data into groups depending on group
+  group.A <- data$id[data$group=="A"]
+  group.B <- data$id[data$group=="B"]
+  group.C <- data$id[data$group=="C"]
+  #Sampling with replacement
+  sample.A.id <- sample(group.A, size = length(group.A), replace = TRUE)
+  sample.B.id <- sample(group.B, size = length(group.B), replace = TRUE)
+  sample.C.id <- sample(group.C, size = length(group.C), replace = TRUE)
+  
+  #Using sampled id to select obs and weight for each id sampled to create bootstrap dataset for each group
+  #Selecting obs and weights using id's sampled
+  
+  #For A
+  sample.A.obs <- NULL
+  sample.A.weight <- NULL
+  for (i in 1:length(sample.A.id)){
+    sample.A.obs[i] <- data$Obs[data$id == sample.A.id[i]]
+    sample.A.weight[i] <- data$weight[data$id == sample.A.id[i]]
+  }
+  #calculating y.tilde_{i} for A
+  y.tilde.A <- sum(sample.A.obs*sample.A.obs)/length(sample.A.obs)
+
+
+#b
+eco.df <- read.table("q5EcoStudy.txt",header = T)
+
+test
+```
 
 
