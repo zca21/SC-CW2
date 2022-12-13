@@ -127,6 +127,149 @@ q2.is <- function(n,x0,time,a,lambda){
 ```
 
 
+```{r}
+## Question 4
+q4.data <- read.csv("q4MixLinReg.csv",header=T)
+
+#Part a
+linRegMixEstep <- function(piCur,aCur,bCur,sCur,x,Y){
+  #matrix to store E-Step values
+  #row i (p(Z_{i} = 1|Y_{i}, θ^{cur}),..., p(Z_{i} = K|Y_{i}, θ^{cur})) row i has X_{i} ie X fixed
+  #column j (p(Z_{i} = j|Y_{1}, θ^{cur}), ...,(Z_{i} = k|Y_{k}, θ^{cur})) column j has Z_{i}=j  ie value of Z_{i} fixed
+  prob <- matrix(data=NA,nrow = length(x),ncol = length(piCur))
+  for (i in 1:length(x)){
+    for (j in 1:length(piCur)){
+      prob[i,j] <- piCur[j]*dnorm(Y[i],mean=aCur[j]+bCur[j]*x[i],sd=sCur[j])/sum(piCur*dnorm(Y[i],mean=aCur+bCur*x[i],sd=sCur))
+    }
+  }
+  return(prob)
+}
+
+#test <-linRegMixEstep(piCur=c(0.4,0.3,0.3),aCur=c(0.1,-0.1,0.2),bCur=c(1,-1,1),sCur=c(1,0.5,1.1),x=q4.data$x,Y=q4.data$Y)
+
+
+#Part b
+#i
+calcNewCoefs <- function(W,x,Y){
+  #Calculating a^{new) and b^{new}
+  new.coef <- matrix(data=NA,ncol = 2,nrow=dim(W)[2])
+  #Creating design matrix
+  X <- matrix(c(rep(1,length(x)),x),ncol=2)
+  for (k in 1:dim(W)[2]){
+    new.coef[k,] <- solve(t(X)%*%diag(W[,k])%*%X)%*%t(X)%*%diag(W[,k])%*%Y
+  }
+  return(t(new.coef))
+}
+#new.coef <- calcNewCoefs(test,x=q4.data$x,Y=q4.data$Y) 
+
+#ii
+calcNewSd <- function(W,x,Y,a,b){
+  new.sd <- NULL
+  #calculating new sd
+  for (k in 1:dim(W)[2]){
+    new.sd[k] <- sqrt(sum(W[,k]*(Y-a[k]-b[k]*x)^2)/sum(W[,k]))
+  }
+  return(new.sd)
+}
+#new.sd <- calcNewSd(test,x,Y,new.coef[1,],new.coef[2,])
+
+#iii
+linRegMixMstep <- function(W,x,Y){
+  #calculating new coefficents for a and b
+  new.coef <- calcNewCoefs(W,x,Y)
+  
+  #calculating new sd
+  new.sd <- calcNewSd(W,x,Y,new.coef[1,],new.coef[2,]) 
+
+  #Calculating new pi
+  new.pi <- NULL
+  for (k in 1:dim(W)[2]){
+    new.pi[k] <- sum(W[,k])/dim(W)[1]
+  }
+ return(list(new.pi,new.coef[1,],new.coef[2,],new.sd))
+}
+#new.theta <- linRegMixMstep(test,x,Y)
+
+#c
+###############This is wrong!!!!! Need to change (covergence isn't working, plan to use final values from final function in d to see what is happening)
+linRegMixCalcLogLik <- function(x,Y,piCur,piNew,aCur,aNew,bCur,bNew,sCur,sNew){
+  #calculating conditional probabilities for current and new values of theta
+  W.cur <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
+  W.new <- linRegMixEstep(piNew,aNew,bNew,sNew,x,Y)
+  #Creating object to store values of log-likelihood for each observation i of Y 
+  Q.cur <- NULL
+  Q.new <- NULL
+  for (i in 1:length(Y)){
+    #calculating log likelihood for each value of Y
+    Q.cur[i] <- sum(W.cur[i,]*log(piCur))+sum(W.cur[i,]*log(dnorm(Y[i],mean = aCur+bCur*x[i],sd=sCur)))
+    Q.new[i] <- sum(W.new[i,]*log(piNew))+sum(W.new[i,]*log(dnorm(Y[i],mean = aNew+bNew*x[i],sd=sNew)))
+  }
+  #Summing over all observations as is in the formula
+  Q.cur <- sum(Q.cur)
+  Q.new <- sum(Q.new)
+  return(c(Q.cur,Q.new))
+}
+
+#linRegMixCalcLogLik(x,Y,piCur,new.pi,aCur,new.coef[1,],bCur,new.coef[2,],sCur,new.sd)
+
+#d
+linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps){
+  #Initializing the algorithm
+  piCur <- piInit
+  aCur <- aInit
+  bCur <- bInit
+  sCur <- sInit
+  
+  conv.critera=0
+  i=0
+  while(i==0){
+    #E-step
+    W <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
+    #Calculating new values for parameters
+    theta.new <- linRegMixMstep(W,x,Y)
+    #Calculating log-likelihood for current and new values of theta
+    theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new[[1]],aCur,theta.new[[2]],bCur,theta.new[[3]],sCur,theta.new[[4]])
+    if(abs(theta.loglik[2]-theta.loglik[1])<convergeEps){
+      conv.critera=1
+    }
+    
+  }
+  return(theta.new )
+}
+
+test <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06)
+
+```
+
+```{r}
+linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps,test){
+  #Initializing the algorithm
+  piCur <- piInit
+  aCur <- aInit
+  bCur <- bInit
+  sCur <- sInit
+  
+  conv.critera=0
+  
+  while(i<test){
+    #E-step
+    W <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
+    #Calculating new values for parameters
+    theta.new <- linRegMixMstep(W,x,Y)
+    #Calculating log-likelihood for current and new values of theta
+    theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new[[1]],aCur,theta.new[[2]],bCur,theta.new[[3]],sCur,theta.new[[4]])
+
+    i=i+1
+    
+  }
+  return(theta.new )
+}
+
+test.1010 <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06,100)
+```
+
+
+
 
 ```{r}
 #Q5 but with unknown number of groups 
@@ -226,11 +369,11 @@ bootFStat <- function(group,y,w,bootCount){
     
     #sampling dataset
     sample.id <- sample(data$id, size = length(y), replace = TRUE)
-    #extracting weight and y value corresponding to id sampled
+
     sample.obs <- NULL
     sample.weight <- NULL
     sample.group <- NULL
-    
+    #extracting weight, group and y value corresponding to id sampled
     for (i in 1:length(y)){
       sample.obs[i] <- data$Obs[data$id == sample.id[i]]
       sample.weight[i] <- data$weight[data$id == sample.id[i]]
@@ -280,6 +423,7 @@ bootFStat <- function(group,y,w,bootCount){
   
   return(bootstr.se)
 }
+#Sorry about using so many loops :P
 
 #b
 set.seed(2022)
