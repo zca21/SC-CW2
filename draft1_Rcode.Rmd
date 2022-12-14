@@ -126,6 +126,11 @@ q2.is <- function(n,x0,time,a,lambda){
 }
 ```
 
+```{r}
+## Question 3
+
+```
+
 
 ```{r}
 ## Question 4
@@ -145,8 +150,6 @@ linRegMixEstep <- function(piCur,aCur,bCur,sCur,x,Y){
   return(prob)
 }
 
-#test <-linRegMixEstep(piCur=c(0.4,0.3,0.3),aCur=c(0.1,-0.1,0.2),bCur=c(1,-1,1),sCur=c(1,0.5,1.1),x=q4.data$x,Y=q4.data$Y)
-
 
 #Part b
 #i
@@ -160,7 +163,6 @@ calcNewCoefs <- function(W,x,Y){
   }
   return(t(new.coef))
 }
-#new.coef <- calcNewCoefs(test,x=q4.data$x,Y=q4.data$Y) 
 
 #ii
 calcNewSd <- function(W,x,Y,a,b){
@@ -171,7 +173,6 @@ calcNewSd <- function(W,x,Y,a,b){
   }
   return(new.sd)
 }
-#new.sd <- calcNewSd(test,x,Y,new.coef[1,],new.coef[2,])
 
 #iii
 linRegMixMstep <- function(W,x,Y){
@@ -188,10 +189,9 @@ linRegMixMstep <- function(W,x,Y){
   }
  return(list(new.pi,new.coef[1,],new.coef[2,],new.sd))
 }
-#new.theta <- linRegMixMstep(test,x,Y)
 
-#c
-###############This is wrong!!!!! Need to change (covergence isn't working, plan to use final values from final function in d to see what is happening)
+
+#Part c
 linRegMixCalcLogLik <- function(x,Y,piCur,piNew,aCur,aNew,bCur,bNew,sCur,sNew){
   #calculating conditional probabilities for current and new values of theta
   W.cur <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
@@ -210,9 +210,8 @@ linRegMixCalcLogLik <- function(x,Y,piCur,piNew,aCur,aNew,bCur,bNew,sCur,sNew){
   return(c(Q.cur,Q.new))
 }
 
-#linRegMixCalcLogLik(x,Y,piCur,new.pi,aCur,new.coef[1,],bCur,new.coef[2,],sCur,new.sd)
 
-#d
+#Part d
 linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps){
   #Initializing the algorithm
   piCur <- piInit
@@ -220,56 +219,45 @@ linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps){
   bCur <- bInit
   sCur <- sInit
   
-  conv.critera=0
-  i=0
-  while(i==0){
+  conv.critera <- 0
+  while(conv.critera==0){
     #E-step
     W <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
     #Calculating new values for parameters
     theta.new <- linRegMixMstep(W,x,Y)
-    #Calculating log-likelihood for current and new values of theta
+    #Calculating log-likelihood for current and new values of parameters
     theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new[[1]],aCur,theta.new[[2]],bCur,theta.new[[3]],sCur,theta.new[[4]])
+    #checking convergence criteria
     if(abs(theta.loglik[2]-theta.loglik[1])<convergeEps){
       conv.critera=1
     }
-    
+    #Updating current values of parameters
+    piCur <- theta.new[[1]]
+    aCur <- theta.new[[2]]
+    bCur <- theta.new[[3]]
+    sCur <- theta.new[[4]]
   }
-  return(theta.new )
+  return(theta.new)
 }
 
-test <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06)
+#Part e
+mle.est <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06)
+#pi MLEs
+round(mle.est[[1]],3)
+# (0.450, 0.255, 0.295)
 
+#alpha MLEs
+round(mle.est[[2]],3)
+# (0.838,  7.458, -5.308)
+
+#beta MLEs
+round(mle.est[[3]],3)
+# (0.258, -1.755,  1.223)
+
+#sd MLEs
+round(mle.est[[4]],3)
+# (0.787, 0.935, 1.450)
 ```
-
-```{r}
-linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps,test){
-  #Initializing the algorithm
-  piCur <- piInit
-  aCur <- aInit
-  bCur <- bInit
-  sCur <- sInit
-  
-  conv.critera=0
-  
-  while(i<test){
-    #E-step
-    W <- linRegMixEstep(piCur,aCur,bCur,sCur,x,Y)
-    #Calculating new values for parameters
-    theta.new <- linRegMixMstep(W,x,Y)
-    #Calculating log-likelihood for current and new values of theta
-    theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new[[1]],aCur,theta.new[[2]],bCur,theta.new[[3]],sCur,theta.new[[4]])
-
-    i=i+1
-    
-  }
-  return(theta.new )
-}
-
-test.1010 <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06,100)
-```
-
-
-
 
 ```{r}
 #Q5 but with unknown number of groups 
