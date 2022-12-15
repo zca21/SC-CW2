@@ -129,7 +129,104 @@ q2.is <- function(n,x0,time,a,lambda){
 ```{r}
 ## Question 3
 
+#start by doing b and c 
+#then do d awhile figuring out a (the algorithm part)
+
+#Part b
+calcDirichletPDF <- function(x,a){
+  #Calculating density of x under Dirichlet distribution with parameters specified by a
+  density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
+  #calculating log of density
+  log.density <- log(density)
+  #returning a numeric vector
+  return(c(log.density))
+}
+
+#Part c
+simDirichletRV <- function(a){
+  #Drawing from gamma distribution
+  U <- rgamma(a,1)
+  #Computing V a vector drawn from Dirichlet distribution with parameters specified by a
+  V <- U/sum(U)
+  
+  return(V)
+}
+
+#Part d
+q3.mcmc <- function(X,initStateProbs,initPT,burnin,n){
+  #X is vector of weather for each observed day (d long if recorded weather for d days)
+  #Converting X into a numeric vector to access entries of PT
+  X <- ifelse(X=="s",1,(ifelse(X=="c",2,3)))
+  init.state <- X[1:(length(X)-1)]
+  trans.state <- X[2:length(X)]
+  
+  #initializing algorithm
+  V <- array(NA,dim=c(3,3,n+burnin+1))
+  V[,,1] <- initStateProbs
+  
+  for (j in 2:(n+burnin+1)){
+    proposal <- matrix(NA,ncol=3,nrow=3)
+    #Generating proposal value for each row of transition matrix
+    for (i in 1:length(initPT)){
+      proposal[i,] <- simDirichletRV(20*V[,i,j-1])
+    }
+      
+      #Generating posterior using equation (12) for proposal and old value of PT
+      prob.trans.prev <- NULL
+      prob.trans.curr <- NULL
+      for (i in 1:length(init.state)){
+        prob.trans.prev[i] <- V[init.state[i],trans.state[i],j-1]
+        prob.trans.curr[i] <- proposal[trans.state[i],init.state[i]]
+      }
+      #density has some constant as proportional but due to fraction constant cancels out so dont
+      #need to worry about it
+      density.prev <- prod(prob.trans.prev)*initStateProbs[X[1]]
+      density.curr <-prod(prob.trans.curr)*initStateProbs[X[1]]
+      
+      #alpha simplier as q is symmetric (Big boi assumption may not be able to do this)
+      alpha <- min(1,density.curr/density.prev)
+      
+      #Accept or Reject
+      if (runif(1) <= alpha){
+        V[,,j] <- proposal
+      } else{
+        V[,,j] <- V[,,j-1]
+      }
+  }
+  
+  return(V[,,(burnin+1:n+burnin+1)])
+  
+}
+#finding prob of sequence under current pt
+X <- read.table("q3Weather.txt",header = F)
+X <- X$V1
+
+
+#Part e
+initPT <- matrix(1/3,nrow=3,ncol=3)
+initStateProbs <- c(1/3,1/3,1/3)
+
+q3.mcmc(X,initStateProbs,initPT,10000,100000)
 ```
+
+```{r}
+  #initializing algorithm
+  V <- array(NA,dim=c(3,3,500))
+  V[,,1] <- initStateProbs
+  
+  V
+  
+  for (j in 2:(n+burnin+1)){
+    proposal <- matrix(NA,ncol=3,nrow=3)
+    #Generating proposal value for each row of transition matrix
+    for (i in 1:length(initPT)){
+      x <- V[,i,j-1]
+      proposal[1,] <- simDirichletRV(20*V[,1,2-1])
+    }
+   test <- matrix(c(1,2,3,4),ncol=2,nrow=2) 
+test[2,1]
+```
+
 
 
 ```{r}
