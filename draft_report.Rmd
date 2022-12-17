@@ -37,13 +37,60 @@ setwd("~/Desktop/Statistical Computing/CW/SC-CW2")
 g(x) = \frac{\lambda}{2}exp(-\lambda|x-b|)
 \end{equation}
 
-For acceptance-rejection sampling we need to find constant $M>0$ such that $\pi(x) \leq Mg(x)$ for $\pi(x)$ the target distribution and $g(x)$ the proposal density. This constant M determines the acceptance probability and hence the efficiency of the algorithm. With the acceptance probability (denoted $\tau$) equal to $\frac{1}{M}$. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have the higher acceptance probability. To find M for each $\lambda$ value I split the real domain of x into 3 intervals corresponding to the different PARTS of $\pi$ and study the relationship between $g(x)$ and $\pi(x)$ within these 3 intervals to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for the ith interval. Then $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of x.
+For acceptance-rejection sampling we need to find constant $M>0$ such that $\pi(x) \leq Mg(x)$ for $\pi(x)$ the target distribution and $g(x)$ the proposal density. This constant M determines the acceptance probability and hence the efficiency of the algorithm. With the acceptance probability (denoted $\tau$) equal to $\frac{1}{M}$. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have the higher acceptance probability. To find M for each $\lambda$ value I split the real domain of x into 3 regions (see plot 1) corresponding to the different PARTS of $\pi$ and study the relationship between $g(x)$ and $\pi(x)$ within these 3 regions to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for the ith interval. Then $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of x.
 
 For the first region ($-\infty, s-b$) $\pi(x)=0$ thus we can let $M_{1}$ be some arbitrarily small value greater than 0 say $\epsilon$ and this will satisfy $\pi(x) \leq M_{1}g(x)$ in the region specified.
-For the second region [$s-b,s$], $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ is an increasing function in this region it will be at it's minimum value at $x=s-b$ and that the value of $\pi(x)$ is constant, setting $M_{2}=\frac{\pi(s-b)}{g(s-b)}=\frac{exp(\lambda|s-2b|)}{\lambda b}$ will satisfy the equation $\pi(x) \leq M_{2}g(x)$ for all x in the region.
-For the third region ($s,\infty$), $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region and initially $g_{1}(x)$ is smaller but sn increasing function, until it is larger than $\pi(x)$ and reaches its maximum where it then becomes a decreasing function but always larger than $\pi(x)$. Thus setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all x in the region.
+For the second region [$s-b,s$], $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ is an increasing function in this region (see plot 1) it will be at it's minimum value at $x=s-b$ and that the value of $\pi(x)$ is constant, setting $M_{2}=\frac{\pi(s-b)}{g(s-b)}=\frac{exp(\lambda|s-2b|)}{\lambda b}$ will satisfy the equation $\pi(x) \leq M_{2}g(x)$ for all x in the region.
+For the third region ($s,\infty$), $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region (see plot 1) and initially $g(x)$ is a smaller but increasing function (see plot 1), until it reaches its maximum (larger than $\pi(x)$ at this value of x) where it then decreases for all larger x but always is larger than $\pi(x)$. Thus setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all x in this region.
 
 Subbing in the values of a=2, b=3 and s=1.25 given in the question the value of M for $\lambda=1$ is $M=max(\epsilon,\frac{e^{4.75}}{3},1.6e^{1.75}) \approx 38.53$ and for $\lambda=0.5$ is $M=max(\epsilon,\frac{e^{2.375}}{1.5},3.2e^{0.875})\approx 7.7$. Thus as M is smaller for $\lambda=0.5$. Thus, out of these 2 values for lambda 0.5 is my chosen value as it leads to an algorithm with a higher efficiency.
+
+```{r,echo=F,fig.align='center'}
+#a
+#Creating plots to help explain
+
+gx.1 <- function(x){
+  gx <- 0.5*exp(-abs(x-3))
+  return(gx)
+}
+
+gx.2 <- function(x){
+  gx <- 0.25*exp(-0.5*abs(x-3))
+  return(gx)
+}
+
+pi.x <- function(x){
+  pi <-NULL
+  for (i in 1:length(x)){
+  if (x[i]>1.25){
+    pi[i] <- (2*1.25^(2))/(2*x[i]^(3))
+  } else if (x[i] >= -1.75){
+    pi[i] <- 1/6
+  }else{
+    pi[i] <- 0
+  }
+  }
+  return(pi)
+}
+
+x<- seq(from=-4, to=10, by=0.01)
+
+plot(x=x,y=pi.x(x),
+     type="l",
+     ylab = "density",
+     main="Plot 1: Comparing target and proposal pdf's",
+     sub="Note: used a=2,b=3,s=1.25 with the green line seperating the regions of the graph")
+curve(gx.1(x),add=T,col="red")
+curve(gx.2,add=T,col="blue")
+abline(v=-1.75,lty=2,col="green")
+abline(v=1.25,lty=2,col="green")
+text(x=-3,y=0.4,labels="Region 1")
+text(x=0,y=0.4,labels="Region 2")
+text(x=6,y=0.4,labels="Region 3")
+legend("topright", lty = c(1,1,1), cex = 0.6, col = c("black","red","blue"),
+legend = c("Target distribution pdf","g(x) pdf with lambda=1","g(x) pdf with lambda=0.5"))
+```
+
 
 ## Part b:
 To implement A-R sampling using the proposal density with $\lambda=0.5$ to obtain samples from $\pi(x)$ I use the following algorithm:
@@ -133,4 +180,5 @@ round(k.root.k.moment(ar.sample,5000,2),3)
 round(k.root.k.moment(ar.sample,5000,3),3)
 #3rd root of 3rd moment is 3.350 (3 d.p.)
 ```
+
 
