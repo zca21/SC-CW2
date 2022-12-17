@@ -59,7 +59,7 @@ gx.2 <- function(x){
   return(gx)
 }
 
-pi.x <- function(x){
+target.dist<- function(x){
   pi <-NULL
   for (i in 1:length(x)){
   if (x[i]>1.25){
@@ -75,7 +75,7 @@ pi.x <- function(x){
 
 x<- seq(from=-4, to=10, by=0.01)
 
-plot(x=x,y=pi.x(x),
+plot(x=x,y=target.dist(x),
      type="l",
      ylab = "density",
      main="Plot 1: Comparing target and proposal pdf's",
