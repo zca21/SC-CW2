@@ -1,0 +1,136 @@
+---
+title: "STatistical Computing (MATH6173) Coursework 2"
+author: "Student ID: 34273638"
+geometry: margin = 2cm
+output:
+  pdf_document: default
+header-includes:
+  - \usepackage{wrapfig}
+  - \usepackage{lipsum}
+  - \usepackage{setspace}
+  - \usepackage{titlesec}
+  - \usepackage{amsmath}
+  - \usepackage{amssymb}
+  - \usepackage{mathtools}
+  - \titlespacing{\title}{0pt}{\parskip}{-\parskip}
+---
+
+```{r, include=F}
+#Setting up enviroment
+setwd("~/Desktop/Statistical Computing/CW/SC-CW2")
+```
+
+# Question 1
+
+## Part a: (add graphs to help in explanation)
+
+\begin{equation}
+\pi(x) =
+\begin{cases}
+ \frac{as^{a}}{2x^{a+1}}\, ,& s<x, \\
+ \frac{1}{2b}\, ,& s-b \leq x \leq s, \\
+ 0  ,& \text{otherwise,}
+ \end{cases}  
+ \end{equation}
+
+\begin{equation}
+g(x) = \frac{\lambda}{2}exp(-\lambda|x-b|)
+\end{equation}
+
+For acceptance-rejection sampling we need to find constant $M>0$ such that $\pi(x) \leq Mg(x)$ for $\pi(x)$ the target distribution and $g(x)$ the proposal density. This constant M determines the acceptance probability and hence the efficiency of the algorithm. With the acceptance probability (denoted $\tau$) equal to $\frac{1}{M}$. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have the higher acceptance probability. To find M for each $\lambda$ value I split the real domain of x into 3 intervals corresponding to the different PARTS of $\pi$ and study the relationship between $g(x)$ and $\pi(x)$ within these 3 intervals to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for the ith interval. Then $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of x.
+
+For the first region ($-\infty, s-b$) $\pi(x)=0$ thus we can let $M_{1}$ be some arbitrarily small value greater than 0 say $\epsilon$ and this will satisfy $\pi(x) \leq M_{1}g(x)$ in the region specified.
+For the second region [$s-b,s$], $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ is an increasing function in this region it will be at it's minimum value at $x=s-b$ and that the value of $\pi(x)$ is constant, setting $M_{2}=\frac{\pi(s-b)}{g(s-b)}=\frac{exp(\lambda|s-2b|)}{\lambda b}$ will satisfy the equation $\pi(x) \leq M_{2}g(x)$ for all x in the region.
+For the third region ($s,\infty$), $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region and initially $g_{1}(x)$ is smaller but sn increasing function, until it is larger than $\pi(x)$ and reaches its maximum where it then becomes a decreasing function but always larger than $\pi(x)$. Thus setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all x in the region.
+
+Subbing in the values of a=2, b=3 and s=1.25 given in the question the value of M for $\lambda=1$ is $M=max(\epsilon,\frac{e^{4.75}}{3},1.6e^{1.75}) \approx 38.53$ and for $\lambda=0.5$ is $M=max(\epsilon,\frac{e^{2.375}}{1.5},3.2e^{0.875})\approx 7.7$. Thus as M is smaller for $\lambda=0.5$. Thus, out of these 2 values for lambda 0.5 is my chosen value as it leads to an algorithm with a higher efficiency.
+
+## Part b:
+To implement A-R sampling using the proposal density with $\lambda=0.5$ to obtain samples from $\pi(x)$ I use the following algorithm:
+
+To sample from $g(x)$ I use the inverse transformation technique by drawing u from a uniform distribution then if $u<0.5$ set $x=b+\frac{log(2u)}{\lambda}$ else set $x=b-\frac{2-2u}{\lambda}$. Then after obtaining x a draw from $g(x)$ perform A-R sampling by drawing y from a uniform(0,1) distribution and if $s < x$ then checking if $y \leq \frac{\pi(x)}{Mg(x)}=\frac{as^{a}}{2x^{a+1}}\frac{2}{M\lambda exp(-\lambda|x-b|)}$ else if $s-b <x$ then checking if $y \leq \frac{\pi(x)}{Mg(x)}=\frac{1}{2b}\frac{2}{M\lambda exp(-\lambda|x-b|)}$ if either of these checks are true then x is a draw from the target distribution $\pi(x)$ and we save this value, if these checks are not true or $x<s-b$ then x is not a draw from $\pi(x)$ and we throw away x. I repeat this process until the desired number of samples from $\pi(x)$ has been attained.
+
+
+## Part d:
+```{r,include=F}
+#c
+q1.ar <- function(n,a,b,s,lambda,M){
+  
+    X <- NULL
+    for (i in 1:n){
+      repeat{
+        #Drawing x from the proposal distibution 
+        u <- runif(1)
+        if (u<0.5){
+          x <- b+log(2*u)/lambda
+        }else {
+          x <- b-log(2-2*u)/lambda
+        }
+        #Performing A-R sampling
+        y <- runif(1)
+        if (s < x){
+          if(y <= (a*s^a)/(2*x^(a+1))/(M*lambda*exp(-lambda*abs(x-b))/2)){
+            X[i]<-x
+            break
+          }
+        } else if(s-b<x){
+          if(y <= 1/(2*b)/(M*lambda*exp(-lambda*abs(x-b))/2)){
+            X[i]<-x
+            break
+          }
+        }
+      }
+    }
+    return(X)
+}
+
+#d
+set.seed(2022)
+ar.sample <- q1.ar(5000,2,3,1.25,0.5,M=3.2*exp(0.875))
+#Creating function to create actual pdf of target distribution
+target.dist <- function(x,a,b,s){
+  n<-length(x)
+  y<-rep(0,n)
+  for (i in 1:n){
+  
+  if (x[i]<s-b){
+    y[i] <- 0
+  }else if (x[i]>s){
+    y[i] <- (a*s^a)/(2*x[i]^(a+1))
+  } else {
+    y[i] <- 1/(2*b)
+  }
+  }
+  return(y)
+}
+```
+
+```{r,echo=F,fig.align='center'}
+#Creating curve of target distribution
+hist(ar.sample,nclass=100,prob = T,
+     xlab = "Values generated by AR sampling",
+     main = "Simulated and actual pdf of target distribution");
+curve(target.dist(x,2,3,1.25),from=-4,to=20,n=1000,add=T, lwd= 1, lty= 1,col="red");
+legend("topright", lty = c(1), cex = 0.6, col = c("red"),
+legend = c("Actual pdf"))
+```
+
+```{r,include=F}
+#e
+#Using the plain Monte Carlo estimator of I (I_{n})
+
+#Function to calculate the kth root of kth moment using plain Monte Carlo estimator
+k.root.k.moment <- function(sample,n,k){
+  output <- (1/n*sum(sample^k))^(1/k)
+  return(output)
+}
+  
+#k=2
+round(k.root.k.moment(ar.sample,5000,2),3)
+#2nd root of 2nd moment is 2.204 (3 d.p.)
+
+#k=3
+round(k.root.k.moment(ar.sample,5000,3),3)
+#3rd root of 3rd moment is 3.350 (3 d.p.)
+```
+
