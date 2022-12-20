@@ -6,6 +6,200 @@ date: "2022-12-14"
 ```{r}
 # Part b
 calcDirichletPDF <- function(x,a){
+  
+  #Calculating density of x under Dirichlet distribution with parameters specified by a
+  density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
+  #calculating log of density
+  log.density <- log(density)
+  #returning a numeric vector
+  return(c(log.density))
+}
+
+# x <- PT[i,,j-1]
+# a <- 20*PT[i,,j-1]
+
+#Part c
+simDirichletRV <- function(a){
+  #Drawing from gamma distribution
+  U <- rgamma(a,1)
+  #Computing V a vector drawn from Dirichlet distribution with parameters specified by a
+  V <- U/sum(U)
+  
+  return(V)
+}
+
+#Initial values
+X <- read.table("q3Weather.txt",header = F)
+X <- X$V1
+initPT <- matrix(1/3,nrow=3,ncol=3)
+initStateProbs <- c(1/3,1/3,1/3)
+n <- 100000
+burnin <- 10000
+
+
+#Converting X into a numeric vector to access entries of PT
+X <- ifelse(X=="s",1,(ifelse(X=="c",2,3)))
+init.state <- X[1:(length(X)-1)]
+trans.state <- X[2:length(X)]
+  
+#initializing algorithm
+PT <- array(NA,dim=c(3,3,n+burnin+1))
+PT[,,1] <- initStateProbs
+proposal <- matrix(NA,ncol=3,nrow=3)
+
+#Starting loop 
+for(j in 2:(n+burnin+1)){
+
+  
+#Generating proposal value for each row of transition matrix (each weather state p_{s},p_{c},p_{r})
+for (i in 1:length(initStateProbs)){
+  proposal[i,] <- simDirichletRV(20*PT[i,,j-1])
+}
+
+#Generating posterior using equation (12) for proposal (new) and current value of PT
+posterior.cur <- posterior.new <- NULL
+for (i in 1:length(init.state)){
+  posterior.cur[i] <- PT[init.state[i],trans.state[i],j-1]
+  posterior.new[i] <- proposal[init.state[i],trans.state[i]]
+}
+# Calculating density of posterior using equation 12
+posterior.density.cur <- prod(posterior.cur)*initStateProbs[X[1]]
+posterior.density.new <-prod(posterior.new)*initStateProbs[X[1]]
+
+# Calculating density using proposal density for each row (p_{x})
+proposal.density.cur <- proposal.density.new <- NULL
+for (i in 1:length(initStateProbs)){
+proposal.density.new[i] <- calcDirichletPDF(proposal[i,],20*PT[i,,j-1])
+proposal.density.cur[i] <- calcDirichletPDF(PT[i,,j-1],20*PT[i,,j-1])
+}
+#How do we combine the 3 vectors to compare with PT??? - do we just multiple to get joint probability density
+proposal.density.cur <- exp(sum(proposal.density.cur))
+proposal.density.new <- exp(sum(proposal.density.new))
+
+#accept-reject
+alpha <- (posterior.density.new*proposal.density.cur)/(posterior.density.cur*proposal.density.new)
+
+if (runif(1) <= min(1,alpha) ){
+  PT[,,j] <- proposal
+}else{
+  PT[,,j] <- PT[,,j-1]
+}
+
+}
+
+
+
+
+######### Testing matrox selection
+# PT[,,1] <- initPT <- matrix(c(1/2,0.25,0.25,1/3,1/6,0.5,1/8,1/4,5/8),nrow=3,ncol=3,byrow = T)
+# PT[2,,1]
+
+########
+```
+
+```{r}
+
+# Part b
+calcDirichletPDF <- function(x,a){
+  
+  #Calculating density of x under Dirichlet distribution with parameters specified by a
+  density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
+  #calculating log of density
+  log.density <- log(density)
+  #returning a numeric vector
+  return(c(log.density))
+}
+
+
+#Part c
+simDirichletRV <- function(a){
+  #Drawing from gamma distribution
+  U <- rgamma(a,1)
+  #Computing V a vector drawn from Dirichlet distribution with parameters specified by a
+  V <- U/sum(U)
+  
+  return(V)
+}
+
+#Initial values
+X <- read.table("q3Weather.txt",header = F)
+X <- X$V1
+initPT <- matrix(1/3,nrow=3,ncol=3)
+initStateProbs <- c(1/3,1/3,1/3)
+n <- 100000
+burnin <- 10000
+
+q3.mcmc <- function(X,initStateProbs,initPT,burnin,n){
+#Converting X into a numeric vector to access entries of PT
+X <- ifelse(X=="s",1,(ifelse(X=="c",2,3)))
+init.state <- X[1:(length(X)-1)]
+trans.state <- X[2:length(X)]
+  
+#initializing algorithm
+PT <- array(NA,dim=c(3,3,n+burnin+1))
+PT[,,1] <- initStateProbs
+proposal <- matrix(NA,ncol=3,nrow=3)
+
+#Starting loop 
+for(j in 2:(n+burnin+1)){
+    
+  #Generating proposal value for each row of transition matrix (each weather state p_{s},p_{c},p_{r})
+  for (i in 1:length(initStateProbs)){
+    proposal[i,] <- simDirichletRV(20*PT[i,,j-1])
+  }
+  
+  #Generating posterior using equation (12) for proposal (new) and current value of PT
+  posterior.cur <- posterior.new <- NULL
+  for (i in 1:length(init.state)){
+    posterior.cur[i] <- PT[init.state[i],trans.state[i],j-1]
+    posterior.new[i] <- proposal[init.state[i],trans.state[i]]
+  }
+  # Calculating density of posterior using equation 12
+  posterior.density.cur <- prod(posterior.cur)*initStateProbs[X[1]]
+  posterior.density.new <-prod(posterior.new)*initStateProbs[X[1]]
+  
+  # Calculating density using proposal density for each row (p_{x})
+  proposal.density.cur <- proposal.density.new <- NULL
+  for (i in 1:length(initStateProbs)){
+    proposal.density.new[i] <- calcDirichletPDF(proposal[i,],20*PT[i,,j-1])
+    proposal.density.cur[i] <- calcDirichletPDF(PT[i,,j-1],20*PT[i,,j-1])
+  }
+  #How do we combine the 3 vectors to compare with PT??? - do we just multiple to get joint probability density
+  proposal.density.cur <- exp(sum(proposal.density.cur))
+  proposal.density.new <- exp(sum(proposal.density.new))
+  
+  #accept-reject
+  alpha <- (posterior.density.new*proposal.density.cur)/(posterior.density.cur*proposal.density.new)
+  
+  if (runif(1) <= min(1,alpha) ){
+    PT[,,j] <- proposal
+  }else{
+    PT[,,j] <- PT[,,j-1]
+  }
+
+}
+#Removing burnin samples
+return(PT[,,(burnin+1):(n+burnin+1)])
+}
+
+set.seed(2022)
+
+PT.sample <- q3.mcmc(X,initStateProbs,initPT,burnin,n)
+
+table(X)
+
+PT.expected <- matrix(c(mean(PT.sample[1,1,]),mean(PT.sample[1,2,]),mean(PT.sample[1,3,]),
+                        mean(PT.sample[2,1,]),mean(PT.sample[2,2,]),mean(PT.sample[2,3,]),
+                        mean(PT.sample[3,1,]),mean(PT.sample[3,2,]),mean(PT.sample[3,3,])),ncol=3,nrow=3,byrow = T)
+round(PT.expected,3)
+```
+
+
+
+
+```{r}
+# Part b
+calcDirichletPDF <- function(x,a){
   #Calculating density of x under Dirichlet distribution with parameters specified by a
   density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
   #calculating log of density
@@ -102,6 +296,9 @@ plot(V[1,2,],type="l") #No convegerence :(
 
 
 
+
+
+
 ```{r}
 ## Question 3
 
@@ -184,3 +381,76 @@ initStateProbs <- c(1/3,1/3,1/3)
 
 q3.mcmc(X,initStateProbs,initPT,10000,100000)
 ```
+
+
+
+```{r}
+## Trying again monday 19th dec
+
+
+###Testing 
+#Initial values
+#finding prob of sequence under current pt
+X <- read.table("q3Weather.txt",header = F)
+X <- X$V1
+initPT <- matrix(1/3,nrow=3,ncol=3)
+initStateProbs <- c(1/3,1/3,1/3)
+n <- 100000
+burnin <- 500
+
+
+  #Converting X into a numeric vector to access entries of PT
+  X <- ifelse(X=="s",1,(ifelse(X=="c",2,3)))
+  init.state <- X[1:(length(X)-1)]
+  trans.state <- X[2:length(X)]
+  
+  #initializing algorithm
+  V <- array(NA,dim=c(3,3,n+burnin+1))
+  V[,,1] <- initStateProbs
+  est.state.prob <- array(NA,dim=c(1,3,n+burnin+1)) 
+  est.state.prob[,,1] <-  initStateProbs
+
+proposal <- matrix(NA,ncol=3,nrow=3)
+#starting loop
+for (j in 2:(n+burnin+1)){
+
+
+    est.state.prob[,,j] <- est.state.prob[,,j-1]%*%V[,,j-1]
+    #Generating proposal value for each row of transition matrix
+    for (i in 1:length(initStateProbs)){
+      proposal[i,] <- simDirichletRV(20*V[i,,j-1])
+    }
+     #calculating alpha
+
+      #Generating posterior using equation (12) for proposal and old value of PT
+      actualp.prev <- actualp.prop <- NULL
+      for (i in 1:length(init.state)){
+        actualp.prev[i] <- V[init.state[i],trans.state[i],j-1]
+        actualp.prop[i] <- proposal[init.state[i],trans.state[i]]
+      }
+      #density has some constant as proportional but due to fraction constant cancels out so dont
+      #need to worry about it
+      true.density.prev <- prod(actualp.prev)*initStateProbs[X[1]]
+      true.density.prop <-prod(actualp.prop)*initStateProbs[X[1]]
+     
+      #Finding density of propoisal using Diriclet(20*prev.value)
+      prop.dens.prop <- prop.dens.prev <- NULL
+       for (i in 1:length(initStateProbs)){
+        prop.dens.prop[i] <- calcDirichletPDF(proposal[i,],20*V[i,,j-1])
+        prop.dens.prev[i] <- calcDirichletPDF(20*V[i,,j-1],20*V[i,,j-1])
+
+       }
+      total.prop.dens.prop <- exp(sum(prop.dens.prop))
+      total.prop.dens.prev <- exp(sum(prop.dens.prev))
+      
+      # alpha <- (true.density.prop*prop.density.prev)/(true.density.prev*prop.density.prop)
+      alpha <-  (true.density.prop/true.density.prev)*(total.prop.dens.prev/total.prop.dens.prop)
+      
+      if(min(1,alpha)>=runif(1)){
+        V[,,j] <- proposal
+      }else{
+        V[,,j] <- V[,,j-1]
+      }
+}
+```
+
