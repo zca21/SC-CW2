@@ -244,5 +244,5 @@ Then calculate $\alpha = \frac{p(P_{T}^{new}|X,\pi)}{p(P_{T}^{j-1}|X,\pi)}\frac{
 
 Once generated the desired number of $P_{T}$ throw away the first b values where b is the burn in. The remaining values are the estimated posterior distribution of $P_{T}$.
 
-
+(NOTE CHANGE VECTORS/ MATRICES TO BOLD FACE IN EQUATIONS)
 

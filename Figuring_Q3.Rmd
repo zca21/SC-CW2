@@ -72,7 +72,7 @@ for (i in 1:length(initStateProbs)){
 proposal.density.new[i] <- calcDirichletPDF(proposal[i,],20*PT[i,,j-1])
 proposal.density.cur[i] <- calcDirichletPDF(PT[i,,j-1],20*PT[i,,j-1])
 }
-#How do we combine the 3 vectors to compare with PT??? - do we just multiple to get joint probability density
+#Finding probability of P_T using joint probability 
 proposal.density.cur <- exp(sum(proposal.density.cur))
 proposal.density.new <- exp(sum(proposal.density.new))
 

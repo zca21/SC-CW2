@@ -210,6 +210,86 @@ simDirichletRV <- function(a){
   return(V)
 }
 
+
+### Part d ###
+
+q3.mcmc <- function(X,initStateProbs,initPT,burnin,n){
+  #Converting X into a numeric vector to access entries of PT
+  X <- ifelse(X=="s",1,(ifelse(X=="c",2,3)))
+  init.state <- X[1:(length(X)-1)]
+  trans.state <- X[2:length(X)]
+  
+  #initializing algorithm
+  PT <- array(NA,dim=c(3,3,n+burnin+1))
+  PT[,,1] <- initStateProbs
+  proposal <- matrix(NA,ncol=3,nrow=3)
+  
+  #Starting loop 
+  for(j in 2:(n+burnin+1)){
+    
+    #Generating proposal value for each row of transition matrix (each weather state p_{s},p_{c},p_{r})
+    for (i in 1:length(initStateProbs)){
+      proposal[i,] <- simDirichletRV(20*PT[i,,j-1])
+    }
+    
+    #Generating posterior using equation (12) for proposal (new) and current value of PT
+    posterior.cur <- posterior.new <- NULL
+    for (i in 1:length(init.state)){
+      posterior.cur[i] <- PT[init.state[i],trans.state[i],j-1]
+      posterior.new[i] <- proposal[init.state[i],trans.state[i]]
+    }
+    # Calculating density of posterior using equation 12
+    posterior.density.cur <- prod(posterior.cur)*initStateProbs[X[1]]
+    posterior.density.new <-prod(posterior.new)*initStateProbs[X[1]]
+    
+    # Calculating density using proposal density for each row (p_{x})
+    proposal.density.cur <- proposal.density.new <- NULL
+    for (i in 1:length(initStateProbs)){
+      proposal.density.new[i] <- calcDirichletPDF(proposal[i,],20*PT[i,,j-1])
+      proposal.density.cur[i] <- calcDirichletPDF(PT[i,,j-1],20*PT[i,,j-1])
+    }
+    #How do we combine the 3 vectors to compare with PT??? - do we just multiple to get joint probability density
+    proposal.density.cur <- exp(sum(proposal.density.cur))
+    proposal.density.new <- exp(sum(proposal.density.new))
+    
+    #accept-reject
+    alpha <- (posterior.density.new*proposal.density.cur)/(posterior.density.cur*proposal.density.new)
+    
+    if (runif(1) <= min(1,alpha) ){
+      PT[,,j] <- proposal
+    }else{
+      PT[,,j] <- PT[,,j-1]
+    }
+    
+  }
+  #Removing burn in samples
+  return(PT[,,(burnin+1):(n+burnin+1)])
+}
+
+### Part e ###
+
+#Initial values
+X <- read.table("q3Weather.txt",header = F)
+X <- X$V1
+initPT <- matrix(1/3,nrow=3,ncol=3)
+initStateProbs <- c(1/3,1/3,1/3)
+n <- 100000
+burnin <- 10000
+
+set.seed(2022)
+
+PT.sample <- q3.mcmc(X,initStateProbs,initPT,burnin,n)
+
+PT.expected <- matrix(c(mean(PT.sample[1,1,]),mean(PT.sample[1,2,]),mean(PT.sample[1,3,]),
+                        mean(PT.sample[2,1,]),mean(PT.sample[2,2,]),mean(PT.sample[2,3,]),
+                        mean(PT.sample[3,1,]),mean(PT.sample[3,2,]),mean(PT.sample[3,3,])),ncol=3,nrow=3,byrow = T)
+round(PT.expected,3)
+
+#Estimated posterior mean of P_{T}  to 3 d.p. is
+# 0.313 0.346 0.341
+# 0.335 0.329 0.336
+# 0.329 0.351 0.319
+
 ########################################## Question 4 #################################################
 
 ### Part a ###
