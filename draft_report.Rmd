@@ -210,11 +210,39 @@ The algorithm will start by applying the logit transform to a and then using the
 
 First by transforming $\boldsymbol{a}$ to the logit scale by setting $b_{i}=log(\frac{a_{i}}{1-a_{i}})$ $p_{tail}(\boldsymbol{a})=Pr(\boldsymbol{X}>\boldsymbol{a}|X_{0}=x_{0})  \equiv Pr(\boldsymbol{U}>\boldsymbol{b}|U_{0}=u_{0})=p_{tail}(\boldsymbol{b}))$, thus we can work with the sequence $U_{i}$ to answer equation (6). Therefore start the algorithm by transforming inputs into proportions (if given as percentages) and calculating $\boldsymbol{b}$.
 
-Next we must simulate the random walk $U_{i}$ using equation 3 and storing these realizations $u_{i}$ in a vector.
+Next for each iteration j we must simulate the random walk $U_{i}$ using equation 3 and storing these realizations $u_{i}$ in a vector.
 Using these values and the proposals $q_{i}$ in part a generate $v_{i}$ a value for each step in sequence $U_{i}$
 Calculate weights $w_{i}$ for each $v_{i}$ by formula $w_{i}=\frac{\pi_{i}(v_{i})}{Q_{i}(v_{i})})$ where $\pi_{i}$ is the pdf of $U_{i}$ and $Q_{i}$ is the density of the proposal distribution $q_{i}$
-Then to calculate equation (6) for this iteration find the product of the weights as (put in equation with integral and how sampled pop is that integral)
-Repeat this process until have desired n values and then calculate importance sampling estimator by finding mean of these values.
+Then to calculate equation (6) for this iteration (and thus this particular simulated realization of the random walk) find the product of the weights as (put in equation with integral and how sampled pop is that integral)
+Repeat this iterative process until have desired n values and then calculate importance sampling estimator by finding mean of these values. (SAY SOMETHING ABOUT FACT THAT LARGE SAMPLE MEANS VALUE CONVERGES TO P_TAIL [AS TAKE OVER LOTS OF REALISATION OF RW])
+
+# Question 3
+
+## Part a
+At initialization set $P_{T}^{cur}$ to be initial value of $P_{T}$ and start at iteration j=1
+
+
+For each iteration j start by drawing $P_{T}^{new}$ the proposed value of $P_{T}$ from the proposal density by drawing each $p_{x}'$ with $x \in \{s,c,r\}$ from Dirichlet $(20p_{x}^{(j-1)})$ (use function created in part c for this) and combining to get $P_{T}^{new}=(p_{s}',p_{c}',p_{r}')^{T}$.
+
+Then calculate the ratio of the posterior density using the new and current values of $P_{T}$. First by considering that:
+
+\begin{equation}
+ p(P_{T}|X,\pi) \propto p(X|P_{T},\pi)
+\end{equation}
+
+We get $\frac{p(P_{T}^{new}|X,\pi)}{p(P_{T}^{(j-1)}|X,\pi)}=\frac{p(X|P_{T}^{new},\pi)}{p(X|P_{T}^{j-1},\pi)}$, thus we can calculate this ratio of densities as we can calculate the RHS.
+
+To calculate the RHS using the Markov property and equation 8 and 9 in the coursework question sheet:
+
+\begin{equation}
+Pr(X=x|\pi,P_{T}) = Pr(X_{1}=x_{1}|\pi,,P_{T})Pr(X_{2}=x_{2}|X_{1}=x_{1},,P_{T})...Pr(X_{n}=x_{n}|X_{n-1}=x_{n-1},,P_{T}) = \pi_{x_{1}}\prod_{i=2}^{n}p_{T}(X_{i}=x_{i}|X_{i-1}=x_{i-1}
+\end{equation}
+
+Now to calculate the ratio of the proposal densities (with the proposal density denoted with $q$) using current and new values of $P_{T}$. To do this, find the densities of each row of $P_{T}$ using the function created in part b with the input x the values of $p_{x}^{new}$ or $p_{x}^{j-1}$ and a=$20p_{x}^{j-1}$ then to calculate the joint probability by multiplying the densities for each row together to find $q(P_{T}^{new})$ and $q(P_{T}^{j-1})$
+
+Then calculate $\alpha = \frac{p(P_{T}^{new}|X,\pi)}{p(P_{T}^{j-1}|X,\pi)}\frac{q(P_{T}^{j-1})}{q(P_{T}^{new})}$ and generate $u$ a value drawn from a Uniform(0,1) distribution and if $u<=min(1,\alpha)$ set $P_{T}^{new}$ to be the jth value of $P_{T}$. Otherwise, set $P_{T}^{cur}$ to be jth value of $P_{T}$.
+
+Once generated the desired number of $P_{T}$ throw away the first b values where b is the burn in. The remaining values are the estimated posterior distribution of $P_{T}$.
 
 
 
