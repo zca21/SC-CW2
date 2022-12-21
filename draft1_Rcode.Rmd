@@ -115,15 +115,133 @@ round(k.root.k.moment(ar.sample,5000,3),3)
 
 ```{r}
 ## Question 2
-n <- 100000
-X <- rexp(n,rate=0.5)+30 ## generate samples from shifted Exp(10/7)
-v.weights <- dnorm(X,mean=30,sd=0.7)/dexp(X-30,rate=0.5) ## vector of weights
-p.t <- mean(v.weights) ## calculate the IS estimator
 
-q2.is <- function(n,x0,time,a,lambda){
-  
-  
+# Trial function calculates probability of X_1 >a_1 given initial value (need to now work out how to do the rest)
+q2.is.trial <- function(n,x0,time,a,lambda){
+  #Turning values into proportions
+  a <- a/100
+  x0 <- x0/100
+  #transforming a to logit scale and turning a into a proportion (dividing by 100)
+  b <- log((a)/(1-a))
+  #generating samples from shifted exponential
+  X <- rexp(n,rate = lambda) + (b-x0)/sqrt(time[2]-time[1])
+  #Calculating weights
+  v.weights <- dnorm(X)/dexp(X-((b-x0)/sqrt(time[2]-time[1])),rate=lambda)
+  #Finding I.S estimator
+  p.t <- mean(v.weights)
+  return(p.t)
 }
+
+q2.is.trial(n=10000,x0=30,time=c(0,0.7),a=50,lambda=0.5)
+
+
+q2.is.trial.chain <- function(n,x0,time,a,lambda){
+  #Turning values into proportions
+  a <- a/100
+  x0 <- x0/100
+  #transforming a to logit scale (calling this vector b)
+  b <- log((a)/(1-a))
+  
+  p.b.iter <- NULL
+  
+  if (length(time)>2){  #Case when Markov chain has more than 1 transition thus have to simulate a random walk to calculate the proposal distribution 
+  
+    for (k in 1:n){
+
+      #Simulating random walk
+      r.w <- NULL
+      r.w[1] <- x0
+      for (i in 2:(length(time)-1)){
+        r.w[i] <- rnorm(1,mean=r.w[i-1],sd=sqrt(time[i]-time[i-1]))
+      }
+      
+      #generating samples from shifted exponential
+      X <- NULL
+      for (i in 2:length(time)){
+        X[i-1] <- rexp(1,rate = lambda) + (b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])
+      }
+      #Calculating weights for each observation in random walk
+      v.weights <- NULL
+      for (i in 2:length(time)){
+        v.weights[i-1] <- dnorm(X[i-1])/dexp(X[i-1]-((b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])),rate=lambda)
+      }
+      #Finding probability that X is greater than a (satisfies equation 6) for current iteration 
+      p.b.iter[k] <- prod(v.weights)
+      }
+      #Finding I.S estimator by taking mean 
+      I.S.est <- mean(p.b.iter)
+  
+  } else { # Dealing with case that markov chain only has 1 jump so don't need to calculate random walk
+           # Simplifies to case that X_{1}>a given that X_{0}=x0
+    
+    #generating samples from proposal shifted exponential
+    X <- rexp(n,rate = lambda) + (b-x0)/sqrt(time[2]-time[1])
+    #Calculating weights
+    v.weights <- dnorm(X)/dexp(X-((b-x0)/sqrt(time[2]-time[1])),rate=lambda)
+    #Finding I.S estimator
+    I.S.est  <- mean(v.weights)
+  }
+  
+  return(I.S.est)
+}
+set.seed(2022)
+q2.is.trial.chain(n=10000,x0=30,time=c(0,0.7,1.2,2.5),a=c(50,70,90),lambda=0.5)
+set.seed(2022)
+q2.is.trial.chain(n=10000,x0=30,time=c(0,0.7),a=c(50),lambda=0.5)
+
+
+set.seed(2022)
+n=10000
+x0=5
+time=c(0,0.7,1.2,2.5)
+a=c(50,70,90)
+lambda=0.5
+
+
+  a <- a/100
+  x0 <- x0/100
+  #transforming a to logit scale and turning a into a proportion (dividing by 100)
+  b <- log((a)/(1-a))
+  p.t <- NULL
+  for (k in 1:n){
+
+  #Simulating random walk
+  r.w <- NULL
+  r.w[1] <- x0
+  for (i in 2:(length(time)-1)){
+    r.w[i] <- rnorm(1,mean=r.w[i-1],sd=sqrt(time[i]-time[i-1]))
+  }
+  
+  #generating samples from shifted exponential
+  X <- NULL
+  for (i in 2:length(time)){
+  X[i-1] <- rexp(1,rate = lambda) + (b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])
+  }
+  #Calculating weights for each observation in random walk
+  v.weights <- NULL
+  for (i in 2:length(time)){
+  v.weights[i-1] <- dnorm(X[i-1])/dexp(X[i-1]-((b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])),rate=lambda)
+  }
+  #Finding I.S estimator (product means to find overall)
+  p.t[k] <- prod(mean(v.weights))
+  }
+  
+
+
+
+
+n <- 100
+x0 <- 30
+time <- c(0,0.7)
+a <- 50
+lambda <- 0.5
+
+  b <- log((a/100)/(1-(a/100)))
+  #generating samples from shifted exponential
+  X <- rexp(n,rate = lambda) + (b-x0)/sqrt(time[2]-time[1])
+  v.weights <- dnorm(X)/dexp(X-((b-x0)/sqrt(time[2]-time[1])),rate=lambda)
+  p.t <- mean(v.weights)
+  return(p.t)
 ```
 
 ```{r}

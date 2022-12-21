@@ -123,6 +123,93 @@ round(k.root.k.moment(ar.sample,5000,3),3)
 #3rd root of 3rd moment is 3.350 (3 d.p.)
 
 
+########################################## Question 2 #################################################
+
+### Part c ###
+
+q2.is <- function(n,x0,time,a,lambda){
+  #Turning values into proportions
+  a <- a/100
+  x0 <- x0/100
+  #transforming a to logit scale (calling this vector b)
+  b <- log((a)/(1-a))
+  
+  p.b.iter <- NULL
+  
+  if (length(time)>2){  #Case when Markov chain has more than 1 transition (d>1) thus have to simulate a random walk to calculate the proposal distribution 
+    
+    for (k in 1:n){
+      
+      #Simulating random walk
+      r.w <- NULL
+      r.w[1] <- x0
+      for (i in 2:(length(time)-1)){
+        r.w[i] <- rnorm(1,mean=r.w[i-1],sd=sqrt(time[i]-time[i-1]))
+      }
+      
+      #generating samples from shifted exponential
+      X <- NULL
+      for (i in 2:length(time)){
+        X[i-1] <- rexp(1,rate = lambda) + (b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])
+      }
+      #Calculating weights for each observation in random walk
+      v.weights <- NULL
+      for (i in 2:length(time)){
+        v.weights[i-1] <- dnorm(X[i-1])/dexp(X[i-1]-((b[i-1]-r.w[i-1])/sqrt(time[i]-time[i-1])),rate=lambda)
+      }
+      #Finding probability that X is greater than a (satisfies equation 6) for current iteration 
+      p.b.iter[k] <- prod(v.weights)
+    }
+    #Finding IS estimator by taking mean 
+    I.S.est <- mean(p.b.iter)
+    
+  } else { # Dealing with case that markov chain only has 1 jump so don't need to calculate random walk
+    # Simplifies to case that X_{1}>a given that X_{0}=x0
+    
+    #generating samples from proposal shifted exponential
+    X <- rexp(n,rate = lambda) + (b-x0)/sqrt(time[2]-time[1])
+    #Calculating weights
+    v.weights <- dnorm(X)/dexp(X-((b-x0)/sqrt(time[2]-time[1])),rate=lambda)
+    #Finding I.S estimator
+    I.S.est  <- mean(v.weights)
+  }
+  
+  return(I.S.est)
+}
+
+
+### Part d ###
+set.seed(2022)
+is.estimate <- q2.is(n=100000,x0=30,time=c(0,0.7,1.2,2.5),a=c(50,70,90),lambda=0.5)
+round(is.estimate,4)
+# Estimate to 3 s.f. is 0.0423
+
+
+########################################## Question 3 #################################################
+
+### Part b ###
+
+calcDirichletPDF <- function(x,a){
+  
+  #Calculating density of x under Dirichlet distribution with parameters specified by a
+  density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
+  #calculating log of density
+  log.density <- log(density)
+  #returning a numeric vector
+  return(c(log.density))
+}
+
+### Part c ###
+
+simDirichletRV <- function(a){
+  #Drawing from gamma distribution
+  U <- rgamma(a,1)
+  #Computing V a vector drawn from Dirichlet distribution with parameters specified by a
+  V <- U/sum(U)
+  
+  return(V)
+}
+
 ########################################## Question 4 #################################################
 
 ### Part a ###
@@ -237,7 +324,7 @@ linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps){
 
 # Importing in data
 q4.data <- read.csv("q4MixLinReg.csv",header=T)
-# Calculating the MLE of the parameters of the mixture of linear regressions.
+# Calculating the MLE of the parameters of the mixture of linear regressions and reporting to 3 d.p.
 mle.est <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06)
 
 #pi MLEs
@@ -338,7 +425,6 @@ bootFStat <- function(group,y,w,bootCount){
 
 eco.df <- read.table("q5EcoStudy.txt",header = T)
 set.seed(2022)
-
 #calculating bootstrap estimates of standard error for dataset using 1000 bootstrap replicates
 round(bootFStat(eco.df$habitat,eco.df$density,eco.df$weight,1000),3) 
 # Calculated standard error of f-statistic with degrees of freedom 2 and 297 is 4.131 (3 d.p.)
