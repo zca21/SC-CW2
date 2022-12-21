@@ -190,12 +190,8 @@ round(is.estimate,4)
 ### Part b ###
 
 calcDirichletPDF <- function(x,a){
-  
-  #Calculating density of x under Dirichlet distribution with parameters specified by a
-  density <- (gamma(sum(a))/prod(gamma(a)))*prod(x^(a-1))
-  #calculating log of density
-  log.density <- log(density)
-  #returning a numeric vector
+  #Calculating log density of x under Dirichlet distribution with parameters specified by a
+  log.density <- lgamma(sum(a))-sum(lgamma(a))+sum((a-1)*log(x))
   return(c(log.density))
 }
 
@@ -253,9 +249,9 @@ q3.mcmc <- function(X,initStateProbs,initPT,burnin,n){
     proposal.density.new <- exp(sum(proposal.density.new))
     
     #accept-reject
-    alpha <- (posterior.density.new*proposal.density.cur)/(posterior.density.cur*proposal.density.new)
+    ratio <- (posterior.density.new*proposal.density.cur)/(posterior.density.cur*proposal.density.new)
     
-    if (runif(1) <= min(1,alpha) ){
+    if (runif(1) <= min(1,ratio) ){
       PT[,,j] <- proposal
     }else{
       PT[,,j] <- PT[,,j-1]
