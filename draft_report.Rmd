@@ -181,4 +181,40 @@ round(k.root.k.moment(ar.sample,5000,3),3)
 #3rd root of 3rd moment is 3.350 (3 d.p.)
 ```
 
+# Question 2
+
+## Part a
+For the continuous-time random walk conditioned on $U_{0}=u_{0}$
+\begin{equation}
+U_{i} \sim \text{Normal}(\mu=U_{i-1},\sigma^{2}=t_{i}-t_{i-1})
+\end{equation}
+
+First by transforming $a$ to the logit scale by setting $b_{i}=log(\frac{a_{i}}{1-a_{i}})$ $p_{tail}(a)=Pr(X>a|X_{0}=x_{0})  \equiv Pr(U>b|U_{0}=u_{0}=p_{tail}(b))$, thus we can work with the sequence $U_{i}$ to answer equation (6). Now from equation (3):
+\begin{equation*}
+Pr(U_{i}>b_{i})=Pr((\sqrt{t_{i}-t_{i-1}})Z+u_{i-1}>b_{i}))=Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right) \hspace{2em}  
+\end{equation*}
+For Z the standard normal and $u_{i-1}$ a sample from $U_{i-1}$
+Therefore, to not waste any samples let $q_{i}$ the proposal the ith observation in the sequence $U_{i}$ be an exponential distribution shifted by $s_{i}$ where:
+
+\begin{equation*}
+ s_{i}=\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}} 
+\end{equation*}
+
+As the samples $w=\{w_{1},...,w_{d}\}$ drawn from these proposals $q=\{q_{1},....,q_{d}\}$ will satisfy $w_{i}>b_{i},\hspace{1em} i \in \{1,...,d\}$ thus all values can be used to calculate $p_{tail}(b)=p_{tail}(a)$.
+
+To calculate $q_{i}$ however, we need to know the value $u_{i-1}$ (a value drawn from the random variable $U_{i-1}$). Thus, each iteration will need to generate these $u_{i}$ values using equation (3) the initial value $u_{0}$ and times $t_{i}i \in \{0,...,d\}$ to generate a realization $u$ of the random walk sequence $U$ and storing these in a vector to access to generate a sample from the proposal distribution. 
+
+## Part b
+
+The algorithm will start by applying the logit transform to a and then using these transformed values b to work with values in sequence 
+
+First by transforming $\boldsymbol{a}$ to the logit scale by setting $b_{i}=log(\frac{a_{i}}{1-a_{i}})$ $p_{tail}(\boldsymbol{a})=Pr(\boldsymbol{X}>\boldsymbol{a}|X_{0}=x_{0})  \equiv Pr(\boldsymbol{U}>\boldsymbol{b}|U_{0}=u_{0})=p_{tail}(\boldsymbol{b}))$, thus we can work with the sequence $U_{i}$ to answer equation (6). Therefore start the algorithm by transforming inputs into proportions (if given as percentages) and calculating $\boldsymbol{b}$.
+
+Next we must simulate the random walk $U_{i}$ using equation 3 and storing these realizations $u_{i}$ in a vector.
+Using these values and the proposals $q_{i}$ in part a generate $v_{i}$ a value for each step in sequence $U_{i}$
+Calculate weights $w_{i}$ for each $v_{i}$ by formula $w_{i}=\frac{\pi_{i}(v_{i})}{Q_{i}(v_{i})})$ where $\pi_{i}$ is the pdf of $U_{i}$ and $Q_{i}$ is the density of the proposal distribution $q_{i}$
+Then to calculate equation (6) for this iteration find the product of the weights as (put in equation with integral and how sampled pop is that integral)
+Repeat this process until have desired n values and then calculate importance sampling estimator by finding mean of these values.
+
+
 
