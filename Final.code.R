@@ -45,7 +45,7 @@ plot(x=x,y=target.dist(x),
      main="Plot 1: Comparing target and proposal pdf's",
      sub="Note: used a=2, b=3, s=1.25 with the green line seperating the regions of the graph")
 curve(gx.1(x),add=T,col="red")
-curve(gx.2,add=T,col="blue")
+curve(gx.2(x),add=T,col="blue")
 abline(v=-1.75,lty=2,col="green")
 abline(v=1.25,lty=2,col="green")
 text(x=-3,y=0.4,labels="Region 1")

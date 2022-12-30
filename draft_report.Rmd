@@ -37,7 +37,7 @@ setwd("~/Desktop/Statistical Computing/CW/SC-CW2")
 g(x) = \frac{\lambda}{2}exp(-\lambda|x-b|)
 \end{equation}
 
-For acceptance-rejection sampling (AR sampling) we need to find a constant $M>0$ such that $\pi(x) \leq Mg(x), \forall x \in \mathbb{R}$ for $\pi(x)$ the target distribution and $g(x)$ the proposal density defined in equations 1 and 2 above. This constant M determines the acceptance probability which is $\frac{1}{M}$ and hence the efficiency of the algorithm. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have a higher acceptance probability and thus will be our preferred value of $\lambda$ for the algorithm. To find M for each $\lambda$ value I split the real domain of $x$ into 3 regions (see plot 1) that I call 1,2 and 3 which correspond to the different expressions of $\pi(x)$ depending on the value of $x$. Then study the relationship between $g(x)$ and $\pi(x)$ within these 3 regions to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for the ith region. Then set $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of $x \in \mathbb{R}$.
+For acceptance-rejection sampling (A-R sampling) we need to find a constant $M>0$ such that $\pi(x) \leq Mg(x), \forall x \in \mathbb{R}$. For $\pi(x)$ the target density (the density from which we want to generate a sample of random values) and $g(x)$ the proposal density defined in equations 1 and 2 above respectively. This constant M determines the acceptance probability which is $\frac{1}{M}$ and hence the efficiency of the algorithm. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have a higher acceptance probability and thus will be our preferred value of $\lambda$ for the algorithm. To find M for each of the proposed $\lambda$ values I split the real domain of $x$ into 3 regions (see plot 1) that I call 1,2 and 3 which correspond to the different expressions of $\pi(x)$ depending on the value of $x$. Then study the relationship between $g(x)$ and $\pi(x)$ within these 3 regions to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for all possibles values of x in the ith region. Then set $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of $x \in \mathbb{R}$.
 
 #### Region 1:
 For the first region ($-\infty, s-b$), $\pi(x)=0$ thus we can let $M_{1}$ be some arbitrarily small value greater than 0 say $\epsilon$. This will satisfy $\pi(x) \leq M_{1}g(x)$ in the region specified as $g(x) > 0$ for all values of $x$ in this region.
@@ -49,7 +49,7 @@ For the second region [$s-b,s$], $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ 
 For the third region ($s,\infty$), $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region (see plot 1) and initially $g(x)$ is a smaller but increasing function (see plot 1), until it reaches its maximum value at which point it is larger than $\pi(x)$. It then becomes a decreasing function of $x$ but is always larger than $\pi(x)$. Thus, setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all $x$ in this region.
 
 #### Calculating M and choosing lambda:
-Subbing in the values of a=2, b=3 and s=1.25 given in the question the value of M for $\lambda=1$ is $M=max(\epsilon,\frac{e^{4.75}}{3},1.6e^{1.75}) \approx 38.53$ and for $\lambda=0.5$ is $M=max(\epsilon,\frac{e^{2.375}}{1.5},3.2e^{0.875})\approx 7.7$. Thus, as M is smaller for $\lambda=0.5$, 0.5 is my chosen value of lambda as it leads to an algorithm with a higher acceptance probability.
+Subbing in the values of a=2, b=3 and s=1.25 given in the question, the value of M for $\lambda=1$ is $M=max(\epsilon,\frac{e^{4.75}}{3},1.6e^{1.75}) \approx 38.53$ and for $\lambda=0.5$ is $M=max(\epsilon,\frac{e^{2.375}}{1.5},3.2e^{0.875})\approx 7.7$. Thus, as M is smaller for $\lambda=0.5$, 0.5 is my chosen value of lambda as it leads to an algorithm with a higher acceptance probability.
 
 ```{r,echo=F,fig.align='center'}
 #a
@@ -87,7 +87,7 @@ plot(x=x,y=target.dist(x),
      main="Plot 1: Comparing target and proposal pdf's",
      sub="Note: used a=2, b=3, s=1.25 with the green line seperating the regions of the graph")
 curve(gx.1(x),add=T,col="red")
-curve(gx.2,add=T,col="blue")
+curve(gx.2(x),add=T,col="blue")
 abline(v=-1.75,lty=2,col="green")
 abline(v=1.25,lty=2,col="green")
 text(x=-3,y=0.4,labels="Region 1")
@@ -199,33 +199,42 @@ round(k.root.k.moment(ar.sample,5000,3),3)
 
 # Question 2
 
-## Part a
+## Part a:
 For the continuous-time random walk $U=(U_{i})_{i \in \{1,...,d\}}$ conditioned on $U_{0}=u_{0}$:
 \begin{equation}
 U_{i} \sim \text{Normal}(\mu=U_{i-1},\sigma^{2}=t_{i}-t_{i-1}) \hspace{2em} \text{at time $t_{i}$}
 \end{equation}
 
-First, by transforming $\boldsymbol{a} = (a_{1},...,a_{d})$ to the logit scale by setting $b_{i}=log(\frac{a_{i}}{1-a_{i}})$, $p_{tail}(\boldsymbol{a})=Pr(\boldsymbol{X}>\boldsymbol{a}|X_{0}=x_{0})  \equiv Pr(\boldsymbol{U}>\boldsymbol{b}|U_{0}=u_{0})=p_{tail}(\boldsymbol{b})$, thus we can work with the sequence $U$ to find $p_{tail}(\boldsymbol{a})$. Now from equation (3):
+First, by transforming $\boldsymbol{a} = (a_{1},...,a_{d})$ to the logit scale by setting $b_{i}=log(\frac{a_{i}}{1-a_{i}})$, $p_{tail}(\boldsymbol{a})=Pr(\boldsymbol{X}>\boldsymbol{a}|X_{0}=x_{0})  \equiv Pr(U>\boldsymbol{b}) := p_{tail}(\boldsymbol{b})$ as $U_{i}=logit(X_{i})$ and the sequence U is already conditioned on $U_{0}=u_{0}$. Thus, we can work with the sequence $U$ and $\boldsymbol{b}$ to find $p_{tail}(\boldsymbol{a})$. Now from equation (3):
 \begin{equation*}
-Pr(U_{i}>b_{i})=Pr((\sqrt{t_{i}-t_{i-1}})Z+u_{i-1}>b_{i}))=Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right) \hspace{2em}  \text{for} \hspace{1em} i \in \{0,...,d\}
+Pr(U_{i}>b_{i})=Pr((\sqrt{t_{i}-t_{i-1}})Z+u_{i-1}>b_{i})=Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right) \hspace{2em}  \text{for} \hspace{1em} i \in \{1,...,d\}
 \end{equation*}
-For $Z$ the standard normal and $u_{i-1}$ a value drawn from $U_{i-1}$. Therefore, to find $Pr(U_{i}>b_{i})$ we can find the probability a standard normal distribution is greater than $\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}$. Therefore, letting $\hat{p}_{t}^{(i)}$ be the importance sampling estimator of $p_{t}^{(i)}=Pr(U_{i}>b_{i})$ we can use the following equation: 
-
-\begin{equation*}
- \hat{p}_{t}^{(i)} = \frac{1}{n}\sum_{j=1}^{n}\frac{\phi(V_{j})}{q_{i}(V_{j})}I\left(V_{j}>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}} \right)
-\end{equation*}
-
-With $V_{j}, j \in \{1,..,n\}$ iid random variables from the proposal distribution $q_{i}$, $\phi$ the density of a standard normal distribution and $I$ the indicator function.  Therefore, to not waste any sample values let $q_{i}$ be an exponential distribution shifted by $s_{i}$ where:
+For $Z$ the standard normal and $u_{i-1}$ a value drawn from $U_{i-1}$. Therefore, to find $Pr(U_{i}>b_{i})$ we can find the probability a standard normal distribution is greater than $s_{i} := \frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}$. Therefore: 
 
 \begin{equation*}
- s_{i}=\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}} 
+Pr(U>\boldsymbol{b})=\prod_{i=1}^{d}Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right)=\prod_{i=1}^{d}\int_{s_{i}}^{\infty}\phi(x)dx=\prod_{i=1}^{d}\int_{-\infty}^{\infty}\frac{\phi(x)}{q_{i}(x)}q_{i}(x)I(x>s_{i})dx = E\left[\prod_{i=1}^{d} \frac{\phi(V_{i})}{q_{i}(V_{i})}I(V_{i}>s_{i})\right]
 \end{equation*}
 
-As all sample values drawn from these proposal distributions $\boldsymbol{q}=\{q_{1},....,q_{d}\}$ will satisfy $v_{i}>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}$ for $i \in \{1,...,d\}$. Thus, all values generated from these proposal distributions can be used to calculate $\hat{p}_{t}^{(i)}$ for $i \in \{1,..,d\}$ (as the indicator function is 1 for all samples drawn to calculate each $\hat{p}_{t}^{(i)}$). 
+With $V_{i}, i \in \{1,..,d\}$ i.i.d. random variables from the proposal distribution, $q_{i}$ the density of the proposal distribution, $\phi$ the density of a standard normal distribution and $I$ the indicator function. 
 
-To calculate $q_{i}$ however, we need to know the value $u_{i-1}$ (a value drawn from the random variable $U_{i-1}$) for each $i$ . Thus, each iteration will need to generate $\boldsymbol{u} = (u_{1},...,u_{d-1})$ a realization of the random walk sequence $U=(U_{i})_{i \in \{1,...,d-1\}}$ conditioned on $U_{0}=u_{0}$ using equation (3) with the initial value $u_{0}$ of the random walk and times $t_{i}$,  $i \in \{0,...,d\}$. Then storing these values to be accessed to generate a sample from the proposal distribution.
+Now using the above equation we get the importance sampling estimator for $p_{tail}(\boldsymbol{b})$ to be:
 
-Thus, using $\boldsymbol{q}$ we can generate generate the sample vector $\boldsymbol{v}=\{v_{1},....,v_{d}\}$ where each $v_{i}$ satisfies $v_{i}>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}$. Thus, as $\prod_{i=1}^{d}\hat{p}_{t}^{(i)}=p_{tail}(\boldsymbol{b})$ each vector is used to calculate $p_{tail}(\boldsymbol{b})=p_{tail}(\boldsymbol{a})$. 
+\begin{equation}
+ I_{n}^{IS}=\frac{1}{n}\sum_{j=1}^{n}\left[ \prod_{i=1}^{d}w_{i}^{(j)}(V_{i}^{(j)})  I(V_{i}^{(j)}>s_{i}^{(j)}) \right]
+\end{equation}
+
+
+Where $w_{i}^{(j)}$ is $\frac{\phi(V_{i})}{q_{i}(V_{i})}$ on the jth iteration and the superscript $(j)$ denoting the jth sampling. Therefore, to not waste any sample values let the proposal distributions be exponential distributions shifted by $s_{i}$ as all sample values (denoted $v_{i}$) drawn from these proposal distributions will satisfy $v_{i}>s_{i}$ for $i \in \{1,...,d\}$. Thus, all values generated from these proposal distributions can be used to calculate $I_{n}^{IS}$ from equation (4) as the indicator function is 1 for each $v_{i}$ drawn from each $V_{i}$. 
+
+To calculate $q_{i}$ however, we need to know the value $u_{i-1}$ (a value drawn from the random variable $U_{i-1}$) for each $i$. Thus, each iteration $j$ which generates a sample vector $\boldsymbol{v}$ will need to generate $\boldsymbol{u} = (u_{1},...,u_{d-1})$ a realization of the random walk sequence $U=(U_{i})_{i \in \{1,...,d-1\}}$ conditioned on $U_{0}=u_{0}$. This can be done by using equation (3) to generate a random walk when provided with an initial value $u_{0}$ of the random walk and times $t_{i}$,  $i \in \{0,...,d\}$. Then storing these values they can be accessed to generate $\boldsymbol{v}$ using the proposal distributions.
+
+Thus, using $d$ exponential distributions shifted by $s_{i}$ for $i \in \{1,..,d\}$ respectively we can generate the sample vector $\boldsymbol{v}>\boldsymbol{s}$ such that using equation (4):
+
+\begin{equation*}
+ \hat{p}_{tail}(\boldsymbol{a})=\frac{1}{n}\sum_{j=1}^{n}\left[ \prod_{i=1}^{d}w_{i}^{(j)}(v_{i}^{(j)}) \right]
+\end{equation*}
+
+Where $\hat{p}_{tail}(\boldsymbol{a})$ is the IS estimate of ${p}_{tail}(\boldsymbol{a})$. Thus, each vector is used to calculate the IS estimate of $p_{tail}(\boldsymbol{a})$.
 
 ## Part b
 
@@ -233,21 +242,19 @@ Thus, using $\boldsymbol{q}$ we can generate generate the sample vector $\boldsy
 The algorithm will start by transforming inputs from percentages to proportions by dividing the values by 100 then applying the logit transform to $\boldsymbol{a}$ and calling the new vector of values $\boldsymbol{b}=log(\frac{\boldsymbol{a}}{1-\boldsymbol{a}})$ (as mentioned in part a)
 
 #### Drawing values from proposal distributions:
-Next for each iteration j we must simulate the random walk $U$ using equation 3 and storing the realization $\boldsymbol{u}$ as mentioned in part a. Using these values and the relevant proposal distribution $q_{i}$ (described in part a) to generate $v_{i}$ a sample from $q_{i}$ for each step $i$ of the random walk sequence $U$.
+Next for each iteration j we must simulate the random walk $U$ using equation (3), the initial value $u_{0}$ and times $t_{i}, i \in \{0,..,d\}$ and storing the values of the random walk $\boldsymbol{u}$ as mentioned in part a. Using these values and the relevant proposal distribution of an exponential distribution shifted by $s_{i}$ (described in part a) to generate $v_{i}, i \in \{1,..,d\}$.
 
 #### Calculating weights:
-Next calculate weights $w_{i}$ of each $v_{i}$ using the formula $w_{i}=\frac{\phi(v_{i})}{q_{i}(v_{i})})$ where $\phi$ is the demnsity of the standard normal and $q_{i}$ is the density of the proposal distribution, an exponential distribution with rate $\lambda$ and shifted by $s_{i}$ as defined in part a. 
+Next calculate weights $w_{i}$ of each $v_{i}$ using the formula $w_{i}=\frac{\phi(v_{i})}{q_{i}(v_{i})}$ where $\phi$ is the density of the standard normal and $q_{i}$ is the density of the proposal distribution, an exponential distribution with rate $\lambda$ and shifted by $s_{i}$ as defined in part a. 
 
-Then the combined weight used to calculate $p_{tail}(\boldsymbol{b})$ is the product of the weights $\prod_{i=1}^{n}w_{i}$. This is the weight used to calculate $Pr(\boldsymbol{U}>\boldsymbol{b}|U_{0}=u_{0})$ (using the fact that $w_{i}$ is weight of $Pr(U_{i}>b_{i}|U_{0}=u_{0})$).
+Then calculate the product of the weights $\prod_{i=1}^{n}w_{i}$ and save this as the jth value in a vector.
 
 #### Calculating probability:
-To calculate $p_{tail}(\boldsymbol{b})$, The previous 2 steps are performed n times thus we have n values of the combined weight (which I will denote $\hat{w}$) which we then use to calculate the importance sampling (IS) estimator defined as:
+To calculate $p_{tail}(\boldsymbol{b})$, the previous 2 steps are performed n times thus we have n values of the product of the weights (which I will denote $\hat{w}^{(j)}$ where the value of $j$ denotes the jth iteration) which we then use to calculate the importance sampling (IS) estimator using equation (4) in part a:
 
 \begin{equation*}
-  I_{n}^{IS} = \frac{1}{n}\sum_{i=1}^{n}\hat{w}(U)\psi(U) = \frac{1}{n}\sum_{i=1}^{n}\hat{w}(U) \hspace{1em} \text{as} \hspace{1em} \psi(U)=1
+  \hat{p}_{tail}(\boldsymbol{a}) = \frac{1}{n}\sum_{j=1}^{n}\hat{w}^{(j)}
 \end{equation*}
-
-Thus the IS estimator of $p_{tail}(\boldsymbol{b})$ is the mean of the n combined weights and this as discussed in part a is the IS estimator of $p_{tail}(\boldsymbol{a})$ too.
 
 \newpage
 # Question 3
@@ -269,21 +276,21 @@ Calculate the ratio of the posterior density using the new and current values of
 
 We get $\frac{p(\boldsymbol{P}_{\boldsymbol{T}}^{new}|\boldsymbol{X},\pi)}{p(\boldsymbol{P}_{\boldsymbol{T}}^{(cur)}|\boldsymbol{X},\pi)}=\frac{p(\boldsymbol{X}|\boldsymbol{P}_{\boldsymbol{T}}^{new},\pi)}{p(\boldsymbol{X}|\boldsymbol{P}_{\boldsymbol{T}}^{cur},\pi)}$, thus we can calculate this ratio of densities as we can calculate the RHS.
 
-To calculate the RHS we use the Markov property and equation 8 and 9 in the coursework question sheet to get following equation:
+To calculate the RHS we can use equation 8 and 9 in the coursework question sheet:
 
 \begin{equation*}
 \begin{aligned}
-Pr(\boldsymbol{X}=\boldsymbol{x}|\pi,\boldsymbol{P}_{\boldsymbol{T}}) = Pr(X_{1}=x_{1}|\pi,,\boldsymbol{P}_{\boldsymbol{T}})Pr(X_{2}=x_{2}|X_{1}=x_{1},,\boldsymbol{P}_{\boldsymbol{T}})\cdot \cdot \cdot Pr(X_{n}=x_{n}|X_{n-1}=x_{n-1},,\boldsymbol{P}_{\boldsymbol{T}}) = \\ \pi_{x_{1}}\prod_{i=2}^{n}p_{T}(X_{i}=x_{i}|X_{i-1}=x_{i-1})
+Pr(\boldsymbol{X}=\boldsymbol{x}|\boldsymbol{P}_{\boldsymbol{T}},\pi) = \pi_{x_{1}}\prod_{i=2}^{n}p_{T}(X_{i}=x_{i}|X_{i-1}=x_{i-1}) \hspace{1em} \text{with} \hspace{1em} x_{i} \in \{s,c,r\} \hspace{1em} \text{for} \hspace{1em} i \in \{1,..,n\}
 \end{aligned}
 \end{equation*}
 
 Therefore, subbing in $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ and $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ in the above equation and then calculating the ratio of results we can calculate the ratio of the posterior density.
 
 #### Calculate the ratio for the proposal density:
-To calculate the ratio of the proposal density $q$ of the current and new values of $\boldsymbol{P}_{\boldsymbol{T}}$. Calculate the probability density of a Dirichlet($20 p^{cur}_{x}$) distribution (the proposal distribution) which I will denote $f(v)$ with $v$ equal to either $p^{cur}_{x}$ or $v= p^{new}_{x}$ for each of the rows of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ or $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ respectively. Then calculate the the probability density of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ and $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ by finding the joint probability density of the rows $p_{x}$ by multiplying the probability densities of each row together (as independent can do this). Thus the ratio of the proposal density is:
+To calculate the ratio of the proposal density $q$ of the current and new values of $\boldsymbol{P}_{\boldsymbol{T}}$. Calculate the probability density of a Dirichlet($20 p^{cur}_{x}$) distribution (the proposal distribution) which I will denote $f(v)$ with $v$ equal to either $p^{cur}_{x}$ or $p^{new}_{x}$ for each of the rows of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ or $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ respectively. Then calculate the the probability density of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ and $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ by finding the joint probability density of the rows $p_{x}$ by multiplying the probability densities of each row together (as independent can do this). Thus the ratio of the proposal density is:
 
 \begin{equation*}
- \frac{f(\boldsymbol{P}_{\boldsymbol{T}}^{cur})}{f(\boldsymbol{P}_{\boldsymbol{T}}^{new})} = \frac{\prod_{x=1}^{3}f(p_{x}^{cur})}{\prod_{x=1}^{3}f(p_{x}^{new})}  \hspace{1em} \text{with} \hspace{1em} x \in \{1=s,2=c,3=r\}
+ \frac{f(\boldsymbol{P}_{\boldsymbol{T}}^{cur})}{f(\boldsymbol{P}_{\boldsymbol{T}}^{new})} = \frac{\prod_{x=1}^{3}f(p_{x}^{cur})}{\prod_{x=1}^{3}f(p_{x}^{new})}  \hspace{1em} \text{with} \hspace{1em} \{1=s,2=c,3=r\} 
 \end{equation*}
 
 #### Accept or reject proposal:
