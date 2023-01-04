@@ -37,16 +37,16 @@ setwd("~/Desktop/Statistical Computing/CW/SC-CW2")
 g(x) = \frac{\lambda}{2}exp(-\lambda|x-b|)
 \end{equation}
 
-For acceptance-rejection sampling (A-R sampling) we need to find a constant $M>0$ such that $\pi(x) \leq Mg(x), \forall x \in \mathbb{R}$. For $\pi(x)$ the target density (the density from which we want to generate a sample of random values) and $g(x)$ the proposal density defined in equations 1 and 2 above respectively. This constant M determines the acceptance probability which is $\frac{1}{M}$ and hence the efficiency of the algorithm. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have a higher acceptance probability and thus will be our preferred value of $\lambda$ for the algorithm. To find M for each of the proposed $\lambda$ values I split the real domain of $x$ into 3 regions (see plot 1) that I call 1,2 and 3 which correspond to the different expressions of $\pi(x)$ depending on the value of $x$. Then study the relationship between $g(x)$ and $\pi(x)$ within these 3 regions to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for all possibles values of x in the ith region. Then set $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of $x \in \mathbb{R}$.
+For acceptance-rejection sampling (A-R sampling) we need to find a constant $M>0$ such that $\pi(x) \leq Mg(x), \forall x \in \mathbb{R}$. With $\pi(x)$ the target density (the density from which we want to generate a sample of random values) and $g(x)$ the proposal density defined in equations 1 and 2 above respectively. This constant M determines the acceptance probability which is $\frac{1}{M}$ and hence the efficiency of the algorithm. For multiple possible values of $\lambda$ in $g(x)$ the value of $\lambda$ that results in a smaller constant M will have a higher acceptance probability and thus will be our preferred value of $\lambda$ for the algorithm. To find M for each of the proposed $\lambda$ values I split the real domain of $x$ into 3 regions (see plot 1) that I call 1,2 and 3 which correspond to the different expressions of $\pi(x)$ depending on the value of $x$. Then study the relationship between $g(x)$ and $\pi(x)$ within these 3 regions to find $M_{1},M_{2},M_{3}$ which correspond to the smallest constant such that $\pi(x) \leq M_{i}g(x)$ for all possibles values of $x$ in the ith region. Then set $M=max(M_{1},M_{2},M_{3})$ as this is the smallest constant that satisfies $\pi(x) \leq Mg(x)$ for all possible values of $x \in \mathbb{R}$.
 
 #### Region 1:
-For the first region ($-\infty, s-b$), $\pi(x)=0$ thus we can let $M_{1}$ be some arbitrarily small value greater than 0 say $\epsilon$. This will satisfy $\pi(x) \leq M_{1}g(x)$ in the region specified as $g(x) > 0$ for all values of $x$ in this region.
+For the first region $x \in (-\infty, s-b)$, $\pi(x)=0$ thus we can let $M_{1}$ be some arbitrarily small value greater than 0 say $\epsilon$. This will satisfy $\pi(x) \leq M_{1}g(x)$ in the region specified as $g(x) > 0$ for all values of $x$ in this region.
 
 #### Region 2:
-For the second region [$s-b,s$], $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ is an increasing function in this region (see plot 1) it will be at it's minimum value at $x=s-b$ and the value of $\pi(x)$ is constant. Thus, setting $M_{2}=\frac{\pi(s-b)}{g(s-b)}=\frac{exp(\lambda|s-2b|)}{\lambda b}$ will satisfy the equation $\pi(x) \leq M_{2}g(x)$ for all values of  $x$ in this region.
+For the second region $x \in [s-b,s]$, $\pi(x)=\frac{1}{2b}$. Considering that $g(x)$ is an increasing function in this region (see plot 1) it will be at it's minimum value at $x=s-b$ and the value of $\pi(x)$ is constant. Thus, setting $M_{2}=\frac{\pi(s-b)}{g(s-b)}=\frac{exp(\lambda|s-2b|)}{\lambda b}$ will satisfy the equation $\pi(x) \leq M_{2}g(x)$ for all values of  $x$ in this region.
 
 #### Region 3:
-For the third region ($s,\infty$), $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region (see plot 1) and initially $g(x)$ is a smaller but increasing function (see plot 1), until it reaches its maximum value at which point it is larger than $\pi(x)$. It then becomes a decreasing function of $x$ but is always larger than $\pi(x)$. Thus, setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all $x$ in this region.
+For the third region $x \in (s,\infty)$, $\pi(x)=\frac{as^{a}}{2x^{a+1}}$. I note that $\pi(x)$ is a decreasing function in this region (see plot 1) and initially $g(x)$ is a smaller but increasing function (see plot 1), until it reaches its maximum value at which point it is larger than $\pi(x)$. It then becomes a decreasing function of $x$ but is always larger than $\pi(x)$. Thus, setting $M_{3}=\frac{\pi(s)}{g(s)}=\frac{a}{\lambda s}exp(\lambda |s-b|)$ will satisfy the equation $\pi(x) \leq M_{3}g(x)$ for all $x$ in this region.
 
 #### Calculating M and choosing lambda:
 Subbing in the values of a=2, b=3 and s=1.25 given in the question, the value of M for $\lambda=1$ is $M=max(\epsilon,\frac{e^{4.75}}{3},1.6e^{1.75}) \approx 38.53$ and for $\lambda=0.5$ is $M=max(\epsilon,\frac{e^{2.375}}{1.5},3.2e^{0.875})\approx 7.7$. Thus, as M is smaller for $\lambda=0.5$, 0.5 is my chosen value of lambda as it leads to an algorithm with a higher acceptance probability.
@@ -102,16 +102,16 @@ legend = c("Target distribution pdf","g(x) pdf with lambda=1","g(x) pdf with lam
 To implement A-R sampling using the proposal density with $\lambda=0.5$ and thus $M=3.2e^{0.875}$ to obtain samples from $\pi(x)$ with parameters $s$, $a$ and $b$ I use the following algorithm:
 
 #### Sampling from the proposal distribution:
-To sample from $g(x)$, use the inverse transformation technique by drawing $u$ from a Uniform(0,1) distribution then if $u<0.5$ set $x=b+\frac{log(2u)}{\lambda}$, else set $x=b-\frac{2-2u}{\lambda}$. To obtain the value $x$, drawn from $g(x)$ the proposal distribution. 
+To sample from the proposal distribution, use the inverse transformation technique by drawing $u$ from a Uniform(0,1) distribution then if $u<0.5$ set $x=b+\frac{log(2u)}{\lambda}$, else set $x=b-\frac{2-2u}{\lambda}$. To obtain the value $x$, drawn from the proposal distribution. 
 
 #### Accept or reject:
 To either accept or reject the value $x$, draw y from a Uniform(0,1) distribution and if: 
 
 * $s < x$, check if $y \leq \frac{\pi(x)}{Mg(x)}=\frac{as^{a}}{2x^{a+1}}\frac{2}{M\lambda exp(-\lambda|x-b|)}$ 
 
-* $s-b <x$, check if $y \leq \frac{\pi(x)}{Mg(x)}=\frac{1}{2b}\frac{2}{M\lambda exp(-\lambda|x-b|)}$ 
+* $s-b \leq x \leq s$, check if $y \leq \frac{\pi(x)}{Mg(x)}=\frac{1}{2b}\frac{2}{M\lambda exp(-\lambda|x-b|)}$ 
 
-If either of these checks are true then $x$ is a draw from the target distribution $\pi(x)$ and the value is saved, if these checks are not true or $x<s-b$ then $x$ is not a draw from $\pi(x)$ and the value of $x$ is disregarded. Repeat this process until the desired number of samples from $\pi(x)$ has been attained.
+If either of these checks are true then $x$ is a draw from the target distribution with density $\pi(x)$ and the value is saved, if these checks are not true or $x<s-b$ then $x$ is not a draw from $\pi(x)$ and the value of $x$ is disregarded. Repeat this process until the desired number of samples from the target distribution has been attained.
 
 
 ## Part d:
@@ -212,10 +212,10 @@ Pr(U_{i}>b_{i})=Pr((\sqrt{t_{i}-t_{i-1}})Z+u_{i-1}>b_{i})=Pr\left(Z>\frac{b_{i}-
 For $Z$ the standard normal and $u_{i-1}$ a value drawn from $U_{i-1}$. Therefore, to find $Pr(U_{i}>b_{i})$ we can find the probability a standard normal distribution is greater than $s_{i} := \frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}$. Therefore: 
 
 \begin{equation*}
-Pr(U>\boldsymbol{b})=\prod_{i=1}^{d}Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right)=\prod_{i=1}^{d}\int_{s_{i}}^{\infty}\phi(x)dx=\prod_{i=1}^{d}\int_{-\infty}^{\infty}\frac{\phi(x)}{q_{i}(x)}q_{i}(x)I(x>s_{i})dx = E\left[\prod_{i=1}^{d} \frac{\phi(V_{i})}{q_{i}(V_{i})}I(V_{i}>s_{i})\right]
+Pr(U>\boldsymbol{b})=\prod_{i=1}^{d}Pr\left(Z>\frac{b_{i}-u_{i-1}}{\sqrt{t_{i}-t_{i-1}}}\right)=\prod_{i=1}^{d}\int_{s_{i}}^{\infty}\phi(x)dx=\prod_{i=1}^{d}\int_{-\infty}^{\infty}\frac{\phi(x)}{q_{i}(x)}q_{i}(x)I(x>s_{i})dx = E\left[\prod_{i=1}^{d} w_{i}(V_{i})I(V_{i}>s_{i})\right]
 \end{equation*}
 
-With $V_{i}, i \in \{1,..,d\}$ i.i.d. random variables from the proposal distribution, $q_{i}$ the density of the proposal distribution, $\phi$ the density of a standard normal distribution and $I$ the indicator function. 
+With $V_{i}, i \in \{1,..,d\}$ i.i.d. random variables from the proposal distribution, $q_{i}$ the density of the proposal distribution, $\phi$ the density of a standard normal distribution, $w_{i}(V_{i})$ the (unnormalized) importance weights (equal to $\frac{\phi(V_{i})}{q_{i}(V_{i})}$) and $I$ the indicator function. 
 
 Now using the above equation we get the importance sampling estimator for $p_{tail}(\boldsymbol{b})$ to be:
 
@@ -224,7 +224,7 @@ Now using the above equation we get the importance sampling estimator for $p_{ta
 \end{equation}
 
 
-Where $w_{i}^{(j)}$ is $\frac{\phi(V_{i})}{q_{i}(V_{i})}$ on the jth iteration and the superscript $(j)$ denoting the jth sampling. Therefore, to not waste any sample values let the proposal distributions be exponential distributions shifted by $s_{i}$ as all sample values (denoted $v_{i}$) drawn from these proposal distributions will satisfy $v_{i}>s_{i}$ for $i \in \{1,...,d\}$. Thus, all values generated from these proposal distributions can be used to calculate $I_{n}^{IS}$ from equation (4) as the indicator function is 1 for each $v_{i}$ drawn from each $V_{i}$. 
+Where $w_{i}^{(j)}$ is $\frac{\phi(V_{i})}{q_{i}(V_{i})}$ the superscript $(j)$ denotes the jth sampling iteration. Therefore, to not waste any sample values let the proposal distributions be exponential distributions shifted by $s_{i}$ as all sample values (denoted $v_{i}$) drawn from these proposal distributions will satisfy $v_{i}>s_{i}$ for $i \in \{1,...,d\}$. Thus, all values generated from these proposal distributions can be used to calculate $I_{n}^{IS}$ from equation (4) as the indicator function is 1 for each $v_{i}$ drawn from each $V_{i}$. 
 
 To calculate $q_{i}$ however, we need to know the value $u_{i-1}$ (a value drawn from the random variable $U_{i-1}$) for each $i$. Thus, each iteration $j$ which generates a sample vector $\boldsymbol{v}$ will need to generate $\boldsymbol{u} = (u_{1},...,u_{d-1})$ a realization of the random walk sequence $U=(U_{i})_{i \in \{1,...,d-1\}}$ conditioned on $U_{0}=u_{0}$. This can be done by using equation (3) to generate a random walk when provided with an initial value $u_{0}$ of the random walk and times $t_{i}$,  $i \in \{0,...,d\}$. Then storing these values they can be accessed to generate $\boldsymbol{v}$ using the proposal distributions.
 
@@ -242,15 +242,15 @@ Where $\hat{p}_{tail}(\boldsymbol{a})$ is the IS estimate of ${p}_{tail}(\boldsy
 The algorithm will start by transforming inputs from percentages to proportions by dividing the values by 100 then applying the logit transform to $\boldsymbol{a}$ and calling the new vector of values $\boldsymbol{b}=log(\frac{\boldsymbol{a}}{1-\boldsymbol{a}})$ (as mentioned in part a)
 
 #### Drawing values from proposal distributions:
-Next for each iteration j we must simulate the random walk $U$ using equation (3), the initial value $u_{0}$ and times $t_{i}, i \in \{0,..,d\}$ and storing the values of the random walk $\boldsymbol{u}$ as mentioned in part a. Using these values and the relevant proposal distribution of an exponential distribution shifted by $s_{i}$ (described in part a) to generate $v_{i}, i \in \{1,..,d\}$.
+Next for each iteration j we must simulate the random walk $U$ using equation (3), the initial value $u_{0}$ and times $t_{i}, i \in \{0,..,d\}$ and storing the values of the generated random walk $\boldsymbol{u}$ as mentioned in part a. Using these values and the relevant proposal distribution of an exponential distribution shifted by $s_{i}$ (described in part a) then generate $v_{i}, i \in \{1,..,d\}$.
 
 #### Calculating weights:
 Next calculate weights $w_{i}$ of each $v_{i}$ using the formula $w_{i}=\frac{\phi(v_{i})}{q_{i}(v_{i})}$ where $\phi$ is the density of the standard normal and $q_{i}$ is the density of the proposal distribution, an exponential distribution with rate $\lambda$ and shifted by $s_{i}$ as defined in part a. 
 
-Then calculate the product of the weights $\prod_{i=1}^{n}w_{i}$ and save this as the jth value in a vector.
+Then calculate the product of the weights for this jth iteration $\hat{w}^{(j)}:= \prod_{i=1}^{n}w_{i}^{(j)}$ and save this value in a vector in element j.
 
 #### Calculating probability:
-To calculate $p_{tail}(\boldsymbol{b})$, the previous 2 steps are performed n times thus we have n values of the product of the weights (which I will denote $\hat{w}^{(j)}$ where the value of $j$ denotes the jth iteration) which we then use to calculate the importance sampling (IS) estimator using equation (4) in part a:
+To calculate $p_{tail}(\boldsymbol{a})$, the previous 2 steps are performed n times thus we have n values of the product of the weights which we then use to calculate the importance sampling (IS) estimator using equation (4) in part a:
 
 \begin{equation*}
   \hat{p}_{tail}(\boldsymbol{a}) = \frac{1}{n}\sum_{j=1}^{n}\hat{w}^{(j)}
@@ -265,7 +265,7 @@ To calculate $p_{tail}(\boldsymbol{b})$, the previous 2 steps are performed n ti
 At initialization set $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ to be the initial value of $\boldsymbol{P}_{\boldsymbol{T}}$ specified in the function.
 
 #### Drawing new proposal value:
-For each iteration j start by drawing $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ the proposed value of $\boldsymbol{P}_{\boldsymbol{T}}$ from the proposal density by drawing each $p_{x}'$ with $x \in \{s,c,r\}$ from a Dirichlet $(20p_{x}^{(cur)})$ distribution and combining these to get $\boldsymbol{P}_{\boldsymbol{T}}^{new}=(p_{s}',p_{c}',p_{r}')^{T}$.
+For each iteration j start by generating $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ the proposed value of $\boldsymbol{P}_{\boldsymbol{T}}$ from the proposal density by drawing each $p_{x}'$ with $x \in \{s,c,r\}$ from a Dirichlet $(20p_{x}^{(cur)})$ distribution and combining these to get $\boldsymbol{P}_{\boldsymbol{T}}^{new}=(p_{s}',p_{c}',p_{r}')^{T}$.
 
 #### Calculate the ratio for the posterior density (target distribution):
 Calculate the ratio of the posterior density using the new and current values of $\boldsymbol{P}_{\boldsymbol{T}}$. First by considering that:
@@ -294,8 +294,8 @@ To calculate the ratio of the proposal density $q$ of the current and new values
 \end{equation*}
 
 #### Accept or reject proposal:
-Calculate $\alpha = min \left( 1,\frac{p(\boldsymbol{P}_{\boldsymbol{T}}^{new}|X,\pi)}{p(\boldsymbol{P}_{\boldsymbol{T}}^{cur}|X,\pi)}\frac{f(\boldsymbol{P}_{\boldsymbol{T}}^{cur})}{f(\boldsymbol{P}_{\boldsymbol{T}}^{new})}\right)$ using the ratios calculated above and generate $u$ a value drawn from a Uniform(0,1) distribution and if $u<=\alpha$ set $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ to be the jth value of $\boldsymbol{P}_{\boldsymbol{T}}$ and update $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ to be the value of $\boldsymbol{P}_{\boldsymbol{T}}^{new}$. Otherwise, set $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ to be jth value of $\boldsymbol{P}_{\boldsymbol{T}}$ and don't update the value of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$.
+Calculate $\alpha = min \left( 1,\frac{p(\boldsymbol{P}_{\boldsymbol{T}}^{new}|X,\pi)}{p(\boldsymbol{P}_{\boldsymbol{T}}^{cur}|X,\pi)}\frac{f(\boldsymbol{P}_{\boldsymbol{T}}^{cur})}{f(\boldsymbol{P}_{\boldsymbol{T}}^{new})}\right)$ using the ratios calculated above and generate $u$ a value drawn from a Uniform(0,1) distribution and if $u<=\alpha$ set $\boldsymbol{P}_{\boldsymbol{T}}^{new}$ to be the jth sample value of $\boldsymbol{P}_{\boldsymbol{T}}$ and update $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ to be the value of $\boldsymbol{P}_{\boldsymbol{T}}^{new}$. Otherwise, set $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$ to be jth sample value of $\boldsymbol{P}_{\boldsymbol{T}}$ and don't update the value of $\boldsymbol{P}_{\boldsymbol{T}}^{cur}$.
 
 #### Iterate:
-Repeat until we have attained n+b+1 sample values of $\boldsymbol{P}_{\boldsymbol{T}}$ where n is the number of desired samples and b is the specified burn in number. Then throw away the first b+1 values of $\boldsymbol{P}_{\boldsymbol{T}}$. The remaining n values of $\boldsymbol{P}_{\boldsymbol{T}}$ is the estimated posterior distribution of $\boldsymbol{P}_{\boldsymbol{T}}$.
+Repeat until we have attained n+b+1 sample values of $\boldsymbol{P}_{\boldsymbol{T}}$ where n is the number of desired posterior sample values and b is the specified burn in number. Then throw away the first b+1 values of $\boldsymbol{P}_{\boldsymbol{T}}$. The remaining n values of $\boldsymbol{P}_{\boldsymbol{T}}$ is the estimated posterior distribution of $\boldsymbol{P}_{\boldsymbol{T}}$.
 
