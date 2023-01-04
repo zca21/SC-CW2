@@ -305,25 +305,23 @@ linRegMixEstep <- function(piCur,aCur,bCur,sCur,x,Y){
 ### Part b ###
 
 ### (i)
-
 calcNewCoefs <- function(W,x,Y){
   #Setting up matrix to store values of new coefficients in
-  new.coef <- matrix(data=NA,ncol = 2,nrow=dim(W)[2])
+  new.coef <- matrix(data=NA,ncol = dim(W)[2],nrow=2)
   #Creating design matrix
   X <- matrix(c(rep(1,length(x)),x),ncol=2)
   
-  #Calculating a^{new) and b^{new}
+  #Calculating a^{new) and b^{new} using equation 19 in coursework sheet
   for (k in 1:dim(W)[2]){
-    new.coef[k,] <- solve(t(X)%*%diag(W[,k])%*%X)%*%t(X)%*%diag(W[,k])%*%Y
+    new.coef[,k] <- solve(t(X)%*%diag(W[,k])%*%X)%*%t(X)%*%diag(W[,k])%*%Y
   }
-  return(t(new.coef))
+  return(list("a.new"=new.coef[1,],"b.new"=new.coef[2,]))
 }
 
 ### (ii)
-
 calcNewSd <- function(W,x,Y,a,b){
   new.sd <- NULL
-  #calculating new sd
+  #calculating new sd using equation 20 in coursework sheet
   for (k in 1:dim(W)[2]){
     new.sd[k] <- sqrt(sum(W[,k]*(Y-a[k]-b[k]*x)^2)/sum(W[,k]))
   }
@@ -336,15 +334,15 @@ linRegMixMstep <- function(W,x,Y){
   #calculating new coefficents for a and b
   new.coef <- calcNewCoefs(W,x,Y)
   
-  #calculating new sd
-  new.sd <- calcNewSd(W,x,Y,new.coef[1,],new.coef[2,]) 
+  #calculating new sd vector
+  new.sd <- calcNewSd(W,x,Y,new.coef$a.new,new.coef$b.new) 
   
-  #Calculating new pi
+  #Calculating new pi using equation 18 in coursework sheet
   new.pi <- NULL
   for (k in 1:dim(W)[2]){
     new.pi[k] <- sum(W[,k])/dim(W)[1]
   }
-  return(list(new.pi,new.coef[1,],new.coef[2,],new.sd))
+  return(list("pi.new"=new.pi,"a.new"=new.coef$a.new,"b.new"=new.coef$b.new,"sd.new"=new.sd))
 }
 
 ### Part c ###
@@ -356,7 +354,7 @@ linRegMixCalcLogLik <- function(x,Y,piCur,piNew,aCur,aNew,bCur,bNew,sCur,sNew){
   Q.cur <- Q.new <-NULL
 
   for (i in 1:length(Y)){
-    #calculating log likelihood for each observed value of Y
+    #calculating log likelihood for each observed value of Y (summing over marginal likelihoods of each value of Z_{j})
     Q.cur[i] <- sum(W.cur[i,]*log(piCur))+sum(W.cur[i,]*log(dnorm(Y[i],mean = aCur+bCur*x[i],sd=sCur)))
     Q.new[i] <- sum(W.new[i,]*log(piNew))+sum(W.new[i,]*log(dnorm(Y[i],mean = aNew+bNew*x[i],sd=sNew)))
   }
@@ -382,16 +380,16 @@ linRegMixEM <- function(piInit,aInit,bInit,sInit,x,Y,convergeEps){
     #Calculating new values for parameters
     theta.new <- linRegMixMstep(W,x,Y)
     #Calculating log-likelihood for current and new values of parameters
-    theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new[[1]],aCur,theta.new[[2]],bCur,theta.new[[3]],sCur,theta.new[[4]])
+    theta.loglik <- linRegMixCalcLogLik(x,Y,piCur,theta.new$pi.new,aCur,theta.new$a.new,bCur,theta.new$b.new,sCur,theta.new$sd.new)
     #checking convergence criteria
     if(abs(theta.loglik[2]-theta.loglik[1])<convergeEps){
       conv.critera=1
     }
     #Updating current values of parameters to those that met the convergence criteria
-    piCur <- theta.new[[1]]
-    aCur <- theta.new[[2]]
-    bCur <- theta.new[[3]]
-    sCur <- theta.new[[4]]
+    piCur <- theta.new$pi.new
+    aCur <- theta.new$a.new
+    bCur <- theta.new$b.new
+    sCur <- theta.new$sd.new
   }
   return(theta.new)
 }
@@ -404,19 +402,19 @@ q4.data <- read.csv("q4MixLinReg.csv",header=T)
 mle.est <- linRegMixEM(c(0.4,0.3,0.3),c(0.1,-0.1,0.2),c(1,-1,1),c(1,0.5,1.1),q4.data$x,q4.data$Y,1e-06)
 
 #pi MLEs
-round(mle.est[[1]],3)
+round(mle.est$pi.new,3)
 # (0.450, 0.255, 0.295)
 
 #alpha MLEs
-round(mle.est[[2]],3)
+round(mle.est$a.new,3)
 # (0.838,  7.458, -5.308)
 
 #beta MLEs
-round(mle.est[[3]],3)
+round(mle.est$b.new,3)
 # (0.258, -1.755,  1.223)
 
 #sd MLEs
-round(mle.est[[4]],3)
+round(mle.est$sd.new,3)
 # (0.787, 0.935, 1.450)
 
 
